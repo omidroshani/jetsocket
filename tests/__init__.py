@@ -1,0 +1,1 @@
+"""WSFabric test suite."""
