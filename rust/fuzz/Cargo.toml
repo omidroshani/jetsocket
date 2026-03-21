@@ -1,0 +1,33 @@
+[package]
+name = "wsfabric-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
+arbitrary = { version = "1", features = ["derive"] }
+
+[[bin]]
+name = "fuzz_frame_parse"
+path = "fuzz_targets/fuzz_frame_parse.rs"
+doc = false
+
+[[bin]]
+name = "fuzz_frame_roundtrip"
+path = "fuzz_targets/fuzz_frame_roundtrip.rs"
+doc = false
+
+[[bin]]
+name = "fuzz_compress"
+path = "fuzz_targets/fuzz_compress.rs"
+doc = false
+
+[[bin]]
+name = "fuzz_handshake_parse"
+path = "fuzz_targets/fuzz_handshake_parse.rs"
+doc = false
