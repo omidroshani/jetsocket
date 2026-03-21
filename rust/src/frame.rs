@@ -427,7 +427,7 @@ mod tests {
         let original = b"Test message";
 
         Python::with_gil(|py| {
-            let encoded = parser.encode(py, Opcode::Text, original, true, true).unwrap();
+            let encoded = parser.encode(py, Opcode::Text as u8, original, true, true).unwrap();
             let encoded_bytes = encoded.as_bytes();
 
             let mut parser2 = FrameParser::new(1024, 4096);

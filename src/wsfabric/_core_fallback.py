@@ -514,3 +514,184 @@ class HandshakeResult:
     headers: dict[str, str]
     subprotocol: str | None
     extensions: list[str]
+
+
+# Overflow policy enum for RingBuffer
+class OverflowPolicy:
+    """Overflow policy enumeration for RingBuffer."""
+
+    DropOldest = 0
+    DropNewest = 1
+    Error = 2
+
+
+class RingBuffer:
+    """Pure-Python fallback for RingBuffer.
+
+    This provides the same API as the Rust RingBuffer for when the
+    Rust extension is not available.
+    """
+
+    # Class-level cache for BufferOverflowError to avoid repeated imports
+    _BufferOverflowError: type | None = None
+
+    @classmethod
+    def _get_overflow_error(cls) -> type:
+        """Lazily import BufferOverflowError to avoid circular imports."""
+        if cls._BufferOverflowError is None:
+            from wsfabric.exceptions import BufferOverflowError  # noqa: PLC0415
+
+            cls._BufferOverflowError = BufferOverflowError
+        return cls._BufferOverflowError
+
+    def __init__(self, capacity: int, policy: str = "drop_oldest") -> None:
+        """Create a new ring buffer.
+
+        Args:
+            capacity: Maximum number of items.
+            policy: Overflow policy ('drop_oldest', 'drop_newest', 'error').
+        """
+        if capacity <= 0:
+            msg = "Buffer capacity must be greater than 0"
+            raise ValueError(msg)
+
+        self._buffer: list[tuple[object, object | None] | None] = [None] * capacity
+        self._head = 0
+        self._tail = 0
+        self._len = 0
+        self._capacity = capacity
+        self._policy = policy
+        self._total_dropped = 0
+
+    def push(self, item: object, sequence_id: object | None = None) -> bool:
+        """Push an item onto the buffer.
+
+        Args:
+            item: The item to push.
+            sequence_id: Optional sequence identifier.
+
+        Returns:
+            True if item was added, False if dropped.
+        """
+        if self._len == self._capacity:
+            if self._policy == "drop_oldest":
+                self._head = (self._head + 1) % self._capacity
+                self._len -= 1
+                self._total_dropped += 1
+            elif self._policy == "drop_newest":
+                self._total_dropped += 1
+                return False
+            else:  # error
+                exc_cls = self._get_overflow_error()
+                raise exc_cls(
+                    "Buffer is full",
+                    capacity=self._capacity,
+                    current_size=self._len,
+                )
+
+        self._buffer[self._tail] = (item, sequence_id)
+        self._tail = (self._tail + 1) % self._capacity
+        self._len += 1
+        return True
+
+    def pop(self) -> object | None:
+        """Pop the oldest item from the buffer."""
+        if self._len == 0:
+            return None
+
+        item_tuple = self._buffer[self._head]
+        self._buffer[self._head] = None
+        self._head = (self._head + 1) % self._capacity
+        self._len -= 1
+
+        return item_tuple[0] if item_tuple else None
+
+    def peek(self) -> object | None:
+        """Peek at the oldest item without removing it."""
+        if self._len == 0:
+            return None
+        item_tuple = self._buffer[self._head]
+        return item_tuple[0] if item_tuple else None
+
+    def drain(self) -> list[object]:
+        """Drain all items from the buffer."""
+        items: list[object] = []
+        while self._len > 0:
+            item = self.pop()
+            if item is not None:
+                items.append(item)
+        return items
+
+    def drain_with_sequences(self) -> list[tuple[object, object | None]]:
+        """Drain all items with their sequence IDs."""
+        items: list[tuple[object, object | None]] = []
+        while self._len > 0:
+            item_tuple = self._buffer[self._head]
+            self._buffer[self._head] = None
+            self._head = (self._head + 1) % self._capacity
+            self._len -= 1
+            if item_tuple is not None:
+                items.append(item_tuple)
+        return items
+
+    def clear(self) -> None:
+        """Clear all items from the buffer."""
+        for i in range(self._capacity):
+            self._buffer[i] = None
+        self._head = 0
+        self._tail = 0
+        self._len = 0
+
+    def reset_dropped_counter(self) -> None:
+        """Reset the dropped counter."""
+        self._total_dropped = 0
+
+    @property
+    def len(self) -> int:
+        """Get the number of items in the buffer."""
+        return self._len
+
+    @property
+    def capacity(self) -> int:
+        """Get the buffer capacity."""
+        return self._capacity
+
+    @property
+    def is_empty(self) -> bool:
+        """Check if the buffer is empty."""
+        return self._len == 0
+
+    @property
+    def is_full(self) -> bool:
+        """Check if the buffer is full."""
+        return self._len == self._capacity
+
+    @property
+    def fill_ratio(self) -> float:
+        """Get the fill ratio (0.0 to 1.0)."""
+        return self._len / self._capacity if self._capacity > 0 else 0.0
+
+    @property
+    def total_dropped(self) -> int:
+        """Get the total number of dropped messages."""
+        return self._total_dropped
+
+    @property
+    def policy(self) -> str:
+        """Get the overflow policy."""
+        return self._policy
+
+    def __len__(self) -> int:
+        """Get the number of items in the buffer."""
+        return self._len
+
+    def __bool__(self) -> bool:
+        """Return True if buffer is not empty."""
+        return self._len > 0
+
+    def __repr__(self) -> str:
+        """Return string representation."""
+        return (
+            f"RingBuffer(capacity={self._capacity}, len={self._len}, "
+            f"fill_ratio={self.fill_ratio:.2f}, policy={self._policy})"
+        )
