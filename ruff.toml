@@ -1,0 +1,33 @@
+line-length = 88
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # import sorting
+    "T20", # print statement usage (forbids print in production code)
+    "PIE", # flake8-pie: small code style improvements
+    "DTZ", # datetime-related errors (e.g., naive datetime usage)
+    "C4",  # flake8-comprehensions: improve list/set/dict comprehensions
+    "UP",  # pyupgrade: modern Python syntax
+    "SIM", # flake8-simplify: simplify if/else, loops, etc.
+    "RUF", # Ruff-specific enhancements
+    "ANN", # flake8-annotations: enforce type hints
+    "PL",  # pylint-style rules: naming, style, structure
+]
+ignore = [
+    "E501",    # line too long
+    "RUF012",  # allow mutable class default values for dataclasses, pydantic etc.
+    "ANN401",  # allow typing.Any as return type
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    "PLR0911", # Too many return statements
+    "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
+    "PLR0913", # Too many arguments in function definition
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+docstring-code-format = true

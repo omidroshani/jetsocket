@@ -1,0 +1,93 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "wsfabric"
+version = "0.1.0"
+description = "Production-grade, resilient WebSocket library for Python with Rust-powered performance"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Omid", email = "omid@example.com" }]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "Framework :: AsyncIO",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+keywords = ["websocket", "async", "trading", "llm", "streaming", "resilient"]
+dependencies = []
+
+[project.optional-dependencies]
+pydantic = ["pydantic>=2.0"]
+orjson = ["orjson>=3.9"]
+uvloop = ["uvloop>=0.19; sys_platform != 'win32'"]
+truststore = ["truststore>=0.8"]
+all = ["pydantic>=2.0", "orjson>=3.9", "uvloop>=0.19; sys_platform != 'win32'", "truststore>=0.8"]
+
+[project.urls]
+Homepage = "https://github.com/omid/wsfabric"
+Documentation = "https://github.com/omid/wsfabric#readme"
+Repository = "https://github.com/omid/wsfabric"
+Issues = "https://github.com/omid/wsfabric/issues"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "src"
+module-name = "wsfabric._core"
+manifest-path = "rust/Cargo.toml"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "pytest-benchmark>=5.0",
+    "mypy>=1.13",
+    "ruff>=0.8",
+    "maturin>=1.7",
+    "websockets>=14.0",
+    "hypothesis>=6.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks integration tests",
+    "benchmark: marks benchmark tests",
+]
+
+[tool.coverage.run]
+source = ["src/wsfabric"]
+branch = true
+omit = ["*/tests/*", "*/_core.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "@overload",
+]
+fail_under = 90
