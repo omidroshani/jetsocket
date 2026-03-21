@@ -33,11 +33,13 @@ if TYPE_CHECKING:
 
 # Try to import Rust core, fall back to pure Python
 try:
-    from wsfabric._core import FrameParser, Handshake
+    from wsfabric._core import Deflater, FrameParser, Handshake, parse_deflate_params
 except ImportError:
     from wsfabric._core_fallback import (  # type: ignore[assignment]
+        Deflater,
         FrameParser,
         Handshake,
+        parse_deflate_params,
     )
 
 
@@ -71,6 +73,8 @@ class SyncTransport(AbstractTransport):
         self._close_code: int | None = None
         self._close_reason: str = ""
         self._selector: selectors.DefaultSelector | None = None
+        # Compression
+        self._deflater: Deflater | None = None
 
     @property
     def uri(self) -> WebSocketURI | None:
@@ -201,6 +205,20 @@ class SyncTransport(AbstractTransport):
         self._subprotocol = result.subprotocol
         self._extensions = result.extensions
 
+        # Initialize compression if server accepted permessage-deflate
+        if self._config.compression:
+            ext_header = ""
+            if hasattr(result, "headers") and isinstance(result.headers, dict):
+                ext_header = result.headers.get("sec-websocket-extensions", "")
+            if "permessage-deflate" in ext_header.lower():
+                cnct, snct, cmwb, smwb = parse_deflate_params(ext_header)
+                self._deflater = Deflater(
+                    client_no_context_takeover=cnct,
+                    server_no_context_takeover=snct,
+                    client_max_window_bits=cmwb,
+                    server_max_window_bits=smwb,
+                )
+
     def _send_all(self, data: bytes) -> None:
         """Send all data, handling partial sends.
 
@@ -291,8 +309,17 @@ class SyncTransport(AbstractTransport):
         if isinstance(data, str):
             data = data.encode("utf-8")
 
+        # Compress if deflater is active and payload exceeds threshold
+        rsv1 = False
+        if (
+            self._deflater is not None
+            and len(data) >= self._config.compression_threshold
+        ):
+            data = self._deflater.compress(data)
+            rsv1 = True
+
         # Encode and send frame (pass opcode as int for Rust compatibility)
-        frame_data = self._parser.encode(int(opcode), data, True, True)
+        frame_data = self._parser.encode(int(opcode), data, True, True, rsv1=rsv1)
         with self._write_lock:
             self._send_all(frame_data)
 
@@ -309,8 +336,18 @@ class SyncTransport(AbstractTransport):
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 
+        payload = frame.payload
+        rsv1 = frame.rsv1
+        if (
+            self._deflater is not None
+            and not frame.opcode.is_control_frame
+            and len(payload) >= self._config.compression_threshold
+        ):
+            payload = self._deflater.compress(payload)
+            rsv1 = True
+
         frame_data = self._parser.encode(
-            int(frame.opcode), frame.payload, True, frame.fin
+            int(frame.opcode), payload, True, frame.fin, rsv1=rsv1
         )
         with self._write_lock:
             self._send_all(frame_data)
@@ -369,6 +406,14 @@ class SyncTransport(AbstractTransport):
                             # Pong frames are typically handled by heartbeat manager
                             pass
                         else:
+                            # Decompress if RSV1 is set (permessage-deflate)
+                            if frame.rsv1 and self._deflater is not None:
+                                decompressed = self._deflater.decompress(frame.payload)
+                                frame = Frame(  # noqa: PLW2901
+                                    opcode=Opcode(int(frame.opcode)),
+                                    payload=decompressed,
+                                    fin=frame.fin,
+                                )
                             data_frames.append(frame)
 
                     if data_frames:
@@ -498,6 +543,7 @@ class SyncTransport(AbstractTransport):
             self._socket = None
 
         self._parser = None
+        self._deflater = None
 
     def __enter__(self) -> SyncTransport:
         """Context manager entry."""

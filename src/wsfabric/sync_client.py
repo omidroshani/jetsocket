@@ -111,6 +111,7 @@ class SyncWebSocketClient(Generic[T]):
         extra_headers: dict[str, str] | None = None,
         subprotocols: list[str] | None = None,
         compress: bool = True,
+        compression_threshold: int = 128,
         # Timeouts & limits
         connect_timeout: float = 10.0,
         close_timeout: float = 5.0,
@@ -131,6 +132,7 @@ class SyncWebSocketClient(Generic[T]):
             "extra_headers": extra_headers,
             "subprotocols": subprotocols,
             "compress": compress,
+            "compression_threshold": compression_threshold,
             "connect_timeout": connect_timeout,
             "close_timeout": close_timeout,
             "max_message_size": max_message_size,

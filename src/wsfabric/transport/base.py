@@ -51,6 +51,7 @@ class BaseTransportConfig:
 
     __slots__ = (
         "compression",
+        "compression_threshold",
         "connect_timeout",
         "extra_headers",
         "max_frame_size",
@@ -74,6 +75,7 @@ class BaseTransportConfig:
         extra_headers: dict[str, str] | None = None,
         subprotocols: list[str] | None = None,
         compression: bool = True,
+        compression_threshold: int = 128,
         origin: str | None = None,
     ) -> None:
         """Initialize transport configuration.
@@ -88,6 +90,7 @@ class BaseTransportConfig:
             extra_headers: Additional headers for handshake.
             subprotocols: List of subprotocols to request.
             compression: Whether to request compression.
+            compression_threshold: Minimum payload size to compress (bytes).
             origin: Origin header value.
         """
         self.connect_timeout = connect_timeout
@@ -99,6 +102,7 @@ class BaseTransportConfig:
         self.extra_headers = extra_headers or {}
         self.subprotocols = subprotocols or []
         self.compression = compression
+        self.compression_threshold = compression_threshold
         self.origin = origin
 
 

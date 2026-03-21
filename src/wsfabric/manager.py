@@ -150,6 +150,7 @@ class WebSocketManager(Generic[T]):
         extra_headers: dict[str, str] | None = None,
         subprotocols: list[str] | None = None,
         compress: bool = True,
+        compression_threshold: int = 128,
         # Timeouts & limits
         connect_timeout: float = 10.0,
         close_timeout: float = 5.0,
@@ -175,6 +176,7 @@ class WebSocketManager(Generic[T]):
             extra_headers=extra_headers or {},
             subprotocols=subprotocols or [],
             compression=compress,
+            compression_threshold=compression_threshold,
         )
 
         # State
