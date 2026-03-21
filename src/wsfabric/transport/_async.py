@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import socket
 import ssl
 from typing import TYPE_CHECKING
 
@@ -27,6 +28,9 @@ from wsfabric.types import CloseCode, Frame, Opcode
 
 if TYPE_CHECKING:
     pass
+
+# Type alias for resolved addresses
+ResolvedAddress = tuple[socket.AddressFamily, str]
 
 # Try to import Rust core, fall back to pure Python
 try:
@@ -68,6 +72,8 @@ class AsyncTransport(AbstractTransport):
         self._pending_frames: list[Frame] = []
         self._close_code: int | None = None
         self._close_reason: str = ""
+        # TLS session caching for faster reconnects
+        self._cached_ssl_session: ssl.SSLSession | None = None
 
     @property
     def uri(self) -> WebSocketURI | None:
@@ -84,8 +90,62 @@ class AsyncTransport(AbstractTransport):
         """Return the close reason if the connection was closed."""
         return self._close_reason
 
+    async def _resolve_dns(self, host: str, port: int) -> list[ResolvedAddress]:
+        """Resolve DNS fresh on each call (no caching).
+
+        This ensures we get the latest DNS records on each reconnect,
+        which is important for load balancing and failover scenarios.
+
+        Args:
+            host: The hostname to resolve.
+            port: The port number.
+
+        Returns:
+            List of (address_family, ip_address) tuples.
+
+        Raises:
+            ConnectionError: If DNS resolution fails.
+        """
+        loop = asyncio.get_event_loop()
+
+        try:
+            infos = await loop.run_in_executor(
+                None,
+                lambda: socket.getaddrinfo(
+                    host,
+                    port,
+                    family=socket.AF_UNSPEC,
+                    type=socket.SOCK_STREAM,
+                ),
+            )
+        except socket.gaierror as e:
+            msg = f"DNS resolution failed for {host}: {e}"
+            raise ConnectionError(msg) from e
+
+        # Deduplicate and extract (family, address) pairs
+        seen: set[tuple[socket.AddressFamily, str]] = set()
+        addresses: list[ResolvedAddress] = []
+
+        for family, type_, proto, canonname, sockaddr in infos:
+            # sockaddr is (ip, port) for IPv4, (ip, port, flowinfo, scope_id) for IPv6
+            ip = str(sockaddr[0])  # Ensure it's a string
+            key = (family, ip)
+            if key not in seen:
+                seen.add(key)
+                addresses.append((family, ip))
+
+        if not addresses:
+            msg = f"No addresses found for {host}"
+            raise ConnectionError(msg)
+
+        return addresses
+
     async def connect(self, uri: str | WebSocketURI) -> None:
         """Connect to a WebSocket server.
+
+        DNS is resolved fresh on each connection attempt to ensure we get
+        the latest records. For TLS connections, cached SSL sessions are
+        reused when available for faster handshakes.
 
         Args:
             uri: The WebSocket URI to connect to.
@@ -109,25 +169,37 @@ class AsyncTransport(AbstractTransport):
         ssl_context: ssl.SSLContext | None = None
         if self._uri.is_secure:
             ssl_context = self._config.ssl_context or create_default_ssl_context()
+            # Enable TLS session caching
+            ssl_context.check_hostname = True
+            ssl_context.verify_mode = ssl.CERT_REQUIRED
 
-        # Connect with timeout
+        # Resolve DNS fresh
         try:
-            self._reader, self._writer = await asyncio.wait_for(
-                asyncio.open_connection(
-                    host=self._uri.host,
-                    port=self._uri.port,
-                    ssl=ssl_context,
-                ),
-                timeout=self._config.connect_timeout,
+            addresses = await asyncio.wait_for(
+                self._resolve_dns(self._uri.host, self._uri.port),
+                timeout=self._config.connect_timeout / 2,  # Half timeout for DNS
             )
         except asyncio.TimeoutError:
-            msg = f"Connection to {self._uri.host}:{self._uri.port} timed out"
+            msg = f"DNS resolution for {self._uri.host} timed out"
             raise TimeoutError(
-                msg, timeout=self._config.connect_timeout, operation="connect"
+                msg, timeout=self._config.connect_timeout, operation="dns"
             ) from None
-        except OSError as e:
-            msg = f"Failed to connect to {self._uri.host}:{self._uri.port}: {e}"
-            raise ConnectionError(msg) from e
+
+        # Try each resolved address until one works
+        last_error: Exception | None = None
+        for family, ip in addresses:
+            try:
+                await self._connect_to_address(ip, family, ssl_context)
+                break
+            except OSError as e:
+                last_error = e
+                continue
+        else:
+            # All addresses failed
+            msg = f"Failed to connect to {self._uri.host}:{self._uri.port}"
+            if last_error:
+                msg = f"{msg}: {last_error}"
+            raise ConnectionError(msg)
 
         # Perform WebSocket handshake
         try:
@@ -136,12 +208,92 @@ class AsyncTransport(AbstractTransport):
             await self._close_transport()
             raise
 
+        # Cache SSL session for faster reconnects
+        if ssl_context is not None and self._writer is not None:
+            self._cache_ssl_session()
+
         # Initialize frame parser
         self._parser = FrameParser(
             self._config.max_frame_size,
             self._config.max_message_size,
         )
         self._connected = True
+
+    async def _connect_to_address(
+        self,
+        ip: str,
+        family: socket.AddressFamily,
+        ssl_context: ssl.SSLContext | None,
+    ) -> None:
+        """Connect to a specific IP address.
+
+        Args:
+            ip: The IP address to connect to.
+            family: The address family (AF_INET or AF_INET6).
+            ssl_context: Optional SSL context for TLS connections.
+
+        Raises:
+            TimeoutError: If the connection times out.
+            OSError: If the connection fails.
+        """
+        if self._uri is None:
+            msg = "URI not set"
+            raise ConnectionError(msg)
+
+        # Build SSL kwargs if needed
+        ssl_kwargs: dict[str, ssl.SSLContext | str | ssl.SSLSession | None] = {}
+        if ssl_context is not None:
+            ssl_kwargs["ssl"] = ssl_context
+            ssl_kwargs["server_hostname"] = self._uri.host
+            # Reuse cached session if available
+            if self._cached_ssl_session is not None:
+                ssl_kwargs["ssl_session"] = self._cached_ssl_session
+
+        try:
+            self._reader, self._writer = await asyncio.wait_for(
+                asyncio.open_connection(
+                    host=ip,
+                    port=self._uri.port,
+                    family=family,
+                    **ssl_kwargs,  # type: ignore[arg-type]
+                ),
+                timeout=self._config.connect_timeout,
+            )
+        except asyncio.TimeoutError:
+            msg = f"Connection to {ip}:{self._uri.port} timed out"
+            raise TimeoutError(
+                msg, timeout=self._config.connect_timeout, operation="connect"
+            ) from None
+
+    def _cache_ssl_session(self) -> None:
+        """Cache the current SSL session for reuse on reconnect.
+
+        This allows TLS session resumption, which significantly speeds up
+        reconnections by avoiding a full handshake.
+        """
+        if self._writer is None:
+            return
+
+        transport = self._writer.transport
+        ssl_object = transport.get_extra_info("ssl_object")
+
+        if ssl_object is not None:
+            try:
+                session = ssl_object.session
+                if session is not None:
+                    self._cached_ssl_session = session
+            except AttributeError:
+                # Older Python versions may not support session access
+                pass
+
+    @property
+    def cached_ssl_session(self) -> ssl.SSLSession | None:
+        """Return the cached SSL session, if any."""
+        return self._cached_ssl_session
+
+    def clear_ssl_session_cache(self) -> None:
+        """Clear the cached SSL session."""
+        self._cached_ssl_session = None
 
     async def _perform_handshake(self) -> None:
         """Perform the WebSocket opening handshake."""
