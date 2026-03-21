@@ -48,6 +48,7 @@ htmlcov/
 # Rust
 target/
 Cargo.lock
+*.dSYM/
 
 # OS
 .DS_Store
