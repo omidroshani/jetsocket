@@ -26,6 +26,9 @@ ignore = [
     "PLR0913", # Too many arguments in function definition
 ]
 
+[lint.per-file-ignores]
+"tests/**/*.py" = ["PLC0415"]  # Allow inline imports in tests (pytest.importorskip pattern)
+
 [format]
 quote-style = "double"
 indent-style = "space"
