@@ -75,11 +75,17 @@ addopts = [
     "-v",
     "--tb=short",
     "--strict-markers",
+    "-m", "not stress and not exchange and not llm",
 ]
 markers = [
     "slow: marks tests as slow",
     "integration: marks integration tests",
     "benchmark: marks benchmark tests",
+    "exchange: marks exchange integration tests (require network)",
+    "network: marks tests requiring network access",
+    "llm: marks LLM provider tests (require API keys)",
+    "stress: marks stress tests (long running)",
+    "security: marks security audit tests",
 ]
 
 [tool.mypy]
