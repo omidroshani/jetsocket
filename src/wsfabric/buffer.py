@@ -96,7 +96,7 @@ class ReplayConfig:
 
 # Try to import Rust RingBuffer, fall back to pure Python
 try:
-    from wsfabric._core import RingBuffer as _RustRingBuffer  # type: ignore[attr-defined]
+    from wsfabric._core import RingBuffer as _RustRingBuffer  # type: ignore[attr-defined]  # noqa: I001
 
     _RUST_AVAILABLE = True
 except ImportError:
