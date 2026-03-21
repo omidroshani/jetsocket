@@ -120,14 +120,15 @@ impl Handshake {
     /// Raises:
     ///     ValueError: If the handshake is invalid
     fn parse_response(&self, response: &[u8]) -> PyResult<HandshakeResult> {
-        let response_str = std::str::from_utf8(response)
-            .map_err(|_| HandshakeError::InvalidResponse)?;
-
-        // Split headers from body
-        let header_end = response_str
-            .find("\r\n\r\n")
+        // Find header end in raw bytes first (body may contain non-UTF-8 frame data)
+        let header_end = response
+            .windows(4)
+            .position(|w| w == b"\r\n\r\n")
             .ok_or(HandshakeError::InvalidResponse)?;
-        let header_section = &response_str[..header_end];
+
+        // Only decode the header section as UTF-8
+        let header_section = std::str::from_utf8(&response[..header_end])
+            .map_err(|_| HandshakeError::InvalidResponse)?;
 
         // Parse status line
         let mut lines = header_section.lines();

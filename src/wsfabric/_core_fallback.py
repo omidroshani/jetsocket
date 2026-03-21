@@ -435,20 +435,18 @@ class Handshake:
         Raises:
             ValueError: If the handshake is invalid.
         """
+        # Find header end in raw bytes first (body may contain non-UTF-8 frame data)
+        header_end = response.find(b"\r\n\r\n")
+        if header_end == -1:
+            msg = "Invalid HTTP response"
+            raise ValueError(msg)
+
+        # Only decode the header section as UTF-8
         try:
-            response_str = response.decode("utf-8")
+            header_section = response[:header_end].decode("utf-8")
         except UnicodeDecodeError:
             msg = "Invalid HTTP response"
             raise ValueError(msg) from None
-
-        # Split headers from body
-        try:
-            header_end = response_str.index("\r\n\r\n")
-        except ValueError:
-            msg = "Invalid HTTP response"
-            raise ValueError(msg) from None
-
-        header_section = response_str[:header_end]
         lines = header_section.split("\r\n")
 
         # Parse status line
