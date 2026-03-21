@@ -1,0 +1,219 @@
+# Multiplexing
+
+Multiplexing allows multiple logical subscriptions over a single WebSocket connection.
+
+## Why Multiplexing?
+
+Many services (like Binance) allow hundreds of subscriptions per connection, but most code opens one connection per subscription. This wastes resources:
+
+| Approach | 50 Symbols |
+|----------|------------|
+| 1 connection per symbol | 50 connections |
+| Multiplexed | 1 connection |
+
+## Basic Usage
+
+```python
+from wsfabric import MultiplexConnection, MultiplexConfig
+
+config = MultiplexConfig(
+    channel_extractor=lambda msg: msg.get("stream"),
+    subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
+    unsubscribe_message=lambda ch: {"method": "UNSUBSCRIBE", "params": [ch]},
+)
+
+async with MultiplexConnection("wss://stream.example.com/ws", config) as mux:
+    # Subscribe to multiple channels
+    btc = await mux.subscribe("btcusdt@trade")
+    eth = await mux.subscribe("ethusdt@trade")
+
+    # Each subscription has its own queue
+    async for trade in btc:
+        print(f"BTC: {trade}")
+```
+
+## Configuration
+
+### Channel Extractor
+
+Required. Extracts the channel name from incoming messages for routing:
+
+```python
+# For Binance-style messages: {"stream": "btcusdt@trade", "data": {...}}
+channel_extractor=lambda msg: msg.get("stream")
+
+# For Bybit-style messages: {"topic": "trade.BTCUSDT", ...}
+channel_extractor=lambda msg: msg.get("topic")
+```
+
+### Subscribe/Unsubscribe Messages
+
+Optional. Generate protocol-specific messages:
+
+```python
+# Binance
+subscribe_message=lambda ch: {
+    "method": "SUBSCRIBE",
+    "params": [ch],
+    "id": int(time.time() * 1000),
+}
+unsubscribe_message=lambda ch: {
+    "method": "UNSUBSCRIBE",
+    "params": [ch],
+    "id": int(time.time() * 1000),
+}
+
+# Bybit
+subscribe_message=lambda ch: {"op": "subscribe", "args": [ch]}
+unsubscribe_message=lambda ch: {"op": "unsubscribe", "args": [ch]}
+```
+
+### Queue Size
+
+Control per-subscription buffer size:
+
+```python
+config = MultiplexConfig(
+    channel_extractor=...,
+    queue_size=1000,  # Max messages per subscription (0 = unbounded)
+)
+```
+
+## Subscription Management
+
+### Subscribe
+
+```python
+sub = await mux.subscribe("btcusdt@trade")
+```
+
+### Unsubscribe
+
+```python
+await mux.unsubscribe("btcusdt@trade")
+# or
+await sub.close()
+```
+
+### List Subscriptions
+
+```python
+channels = mux.list_subscriptions()
+print(f"Active subscriptions: {channels}")
+```
+
+### Get Subscription
+
+```python
+sub = mux.get_subscription("btcusdt@trade")
+if sub and sub.is_active:
+    print("Still subscribed")
+```
+
+## Receiving Messages
+
+Each subscription has its own message queue:
+
+```python
+# Async iteration
+async for msg in sub:
+    print(msg)
+
+# With timeout
+msg = await sub.recv(timeout=5.0)
+```
+
+## Statistics
+
+```python
+# Multiplex stats
+mux_stats = mux.stats()
+print(f"Total subscriptions: {mux_stats.total_subscriptions}")
+print(f"Active: {mux_stats.active_subscriptions}")
+print(f"Routed messages: {mux_stats.total_messages_routed}")
+print(f"Unroutable: {mux_stats.unroutable_messages}")
+
+# Per-subscription stats
+sub_stats = sub.stats()
+print(f"Channel: {sub_stats.channel}")
+print(f"Messages received: {sub_stats.messages_received}")
+print(f"Queue size: {sub_stats.queue_size}")
+```
+
+## Exchange Examples
+
+### Binance
+
+```python
+config = MultiplexConfig(
+    channel_extractor=lambda msg: msg.get("stream"),
+    subscribe_message=lambda ch: {
+        "method": "SUBSCRIBE",
+        "params": [ch],
+        "id": 1,
+    },
+    unsubscribe_message=lambda ch: {
+        "method": "UNSUBSCRIBE",
+        "params": [ch],
+        "id": 2,
+    },
+)
+
+async with MultiplexConnection(
+    "wss://stream.binance.com:9443/ws",
+    config,
+) as mux:
+    btc = await mux.subscribe("btcusdt@trade")
+    eth = await mux.subscribe("ethusdt@aggTrade")
+    kline = await mux.subscribe("btcusdt@kline_1m")
+```
+
+### Bybit
+
+```python
+config = MultiplexConfig(
+    channel_extractor=lambda msg: msg.get("topic"),
+    subscribe_message=lambda ch: {"op": "subscribe", "args": [ch]},
+    unsubscribe_message=lambda ch: {"op": "unsubscribe", "args": [ch]},
+)
+
+async with MultiplexConnection(
+    "wss://stream.bybit.com/v5/public/spot",
+    config,
+) as mux:
+    trades = await mux.subscribe("publicTrade.BTCUSDT")
+```
+
+## Full Example
+
+```python
+import asyncio
+from wsfabric import MultiplexConnection, MultiplexConfig
+
+async def process_subscription(sub, name):
+    async for msg in sub:
+        data = msg.get("data", msg)
+        print(f"{name}: {data}")
+
+async def main():
+    config = MultiplexConfig(
+        channel_extractor=lambda msg: msg.get("stream"),
+        subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
+    )
+
+    async with MultiplexConnection(
+        "wss://stream.binance.com:9443/ws",
+        config,
+        manager_kwargs={"heartbeat": {"interval": 20.0}},
+    ) as mux:
+        btc = await mux.subscribe("btcusdt@trade")
+        eth = await mux.subscribe("ethusdt@trade")
+
+        await asyncio.gather(
+            process_subscription(btc, "BTC"),
+            process_subscription(eth, "ETH"),
+        )
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```

@@ -1,0 +1,129 @@
+site_name: WSFabric
+site_description: Production-grade, resilient WebSocket library for Python
+site_url: https://wsfabric.dev
+repo_url: https://github.com/wsfabric/wsfabric
+repo_name: wsfabric
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_signature: true
+            show_signature_annotations: true
+            members_order: source
+            separate_signature: true
+            signature_crossrefs: true
+  - autorefs
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quickstart: getting-started/quickstart.md
+    - Basic Concepts: getting-started/basic-concepts.md
+  - User Guide:
+    - Async API: user-guide/async-api.md
+    - Sync API: user-guide/sync-api.md
+    - Reconnection: user-guide/reconnection.md
+    - Heartbeat: user-guide/heartbeat.md
+    - Message Buffering: user-guide/message-buffering.md
+    - Connection Pool: user-guide/connection-pool.md
+    - Multiplexing: user-guide/multiplexing.md
+    - Typed Messages: user-guide/typed-messages.md
+  - Examples:
+    - Binance Trades: examples/binance-trades.md
+    - LLM Streaming: examples/llm-streaming.md
+    - Multi-Symbol Dashboard: examples/multi-symbol-dashboard.md
+    - Sync Scripting: examples/sync-scripting.md
+  - API Reference:
+    - WebSocketManager: reference/api/manager.md
+    - SyncWebSocketClient: reference/api/sync-client.md
+    - ConnectionPool: reference/api/pool.md
+    - MultiplexConnection: reference/api/multiplex.md
+    - TypedWebSocket: reference/api/typed.md
+    - Presets: reference/api/presets.md
+    - Events: reference/api/events.md
+    - Exceptions: reference/api/exceptions.md
+    - Configuration: reference/api/config.md
+  - Changelog: reference/changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/wsfabric/wsfabric
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/wsfabric/
+
+extra_css:
+  - assets/stylesheets/extra.css
