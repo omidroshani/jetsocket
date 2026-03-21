@@ -37,6 +37,9 @@ EventType = Literal[
     "pong",
     "closing",
     "closed",
+    "replay_started",
+    "replay_completed",
+    "buffer_overflow",
 ]
 
 # Type variable for generic message data
@@ -225,6 +228,51 @@ class ClosedEvent:
     reconnecting: bool
 
 
+@dataclass(frozen=True, slots=True)
+class ReplayStartedEvent:
+    """Emitted when message replay begins after reconnection.
+
+    Args:
+        mode: The replay mode ('sequence_id' or 'full_buffer').
+        last_sequence_id: The last sequence ID before disconnect (if available).
+        message_count: Number of messages in buffer (for full_buffer mode).
+    """
+
+    mode: str
+    last_sequence_id: int | str | None
+    message_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class ReplayCompletedEvent:
+    """Emitted when message replay finishes.
+
+    Args:
+        mode: The replay mode used.
+        replayed_count: Number of messages replayed.
+        duration_ms: Time taken for replay in milliseconds.
+    """
+
+    mode: str
+    replayed_count: int
+    duration_ms: float
+
+
+@dataclass(frozen=True, slots=True)
+class BufferOverflowEvent:
+    """Emitted when the message buffer overflows.
+
+    Args:
+        capacity: Maximum buffer capacity.
+        dropped_count: Number of messages dropped.
+        policy: The overflow policy in effect.
+    """
+
+    capacity: int
+    dropped_count: int
+    policy: str
+
+
 # Union type for all event data
 EventData = (
     ConnectingEvent
@@ -240,6 +288,9 @@ EventData = (
     | PongEvent
     | ClosingEvent
     | ClosedEvent
+    | ReplayStartedEvent
+    | ReplayCompletedEvent
+    | BufferOverflowEvent
 )
 
 

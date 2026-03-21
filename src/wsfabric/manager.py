@@ -20,7 +20,9 @@ from typing import (
 )
 
 from wsfabric.backoff import BackoffConfig, BackoffStrategy
+from wsfabric.buffer import BufferConfig, MessageBuffer, ReplayConfig
 from wsfabric.events import (
+    BufferOverflowEvent,
     ClosedEvent,
     ClosingEvent,
     ConnectedEvent,
@@ -36,6 +38,8 @@ from wsfabric.events import (
     RawMessageEvent,
     ReconnectedEvent,
     ReconnectingEvent,
+    ReplayCompletedEvent,
+    ReplayStartedEvent,
     StateChangeEvent,
 )
 from wsfabric.exceptions import (
@@ -112,6 +116,8 @@ class WebSocketManager(Generic[T]):
         backoff: Backoff configuration for reconnection.
         max_connection_age: Maximum time to stay connected before reconnecting.
         heartbeat: Heartbeat configuration for ping/pong.
+        buffer: Buffer configuration for message buffering.
+        replay: Replay configuration for message replay on reconnect.
         serializer: Function to serialize outgoing messages.
         deserializer: Function to deserialize incoming messages.
         ssl_context: SSL context for secure connections.
@@ -133,6 +139,9 @@ class WebSocketManager(Generic[T]):
         max_connection_age: float | None = None,
         # Heartbeat configuration
         heartbeat: HeartbeatConfig | None = None,
+        # Buffer & replay configuration
+        buffer: BufferConfig | None = None,
+        replay: ReplayConfig | None = None,
         # Serialization
         serializer: Callable[[Any], bytes] | None = None,
         deserializer: Callable[[bytes], T] | None = None,
@@ -152,6 +161,8 @@ class WebSocketManager(Generic[T]):
         self._backoff_config = backoff or BackoffConfig()
         self._max_connection_age = max_connection_age
         self._heartbeat_config = heartbeat
+        self._buffer_config = buffer
+        self._replay_config = replay
         self._serializer = serializer or _default_serializer
         self._deserializer = deserializer or _default_deserializer
         self._close_timeout = close_timeout
@@ -174,6 +185,11 @@ class WebSocketManager(Generic[T]):
         self._stats = _MutableStats()
         self._emitter = EventEmitter()
 
+        # Message buffer for replay
+        self._buffer: MessageBuffer[T] | None = None
+        if self._buffer_config is not None:
+            self._buffer = MessageBuffer(self._buffer_config)
+
         # Tasks
         self._message_task: asyncio.Task[None] | None = None
         self._age_task: asyncio.Task[None] | None = None
@@ -187,6 +203,7 @@ class WebSocketManager(Generic[T]):
         self._disconnect_time: float | None = None
         self._attempt = 0
         self._last_error: Exception | None = None
+        self._last_dropped_count = 0  # Track buffer overflow events
 
     # -------------------------------------------------------------------------
     # Properties
@@ -347,6 +364,10 @@ class WebSocketManager(Generic[T]):
                 uri=self._uri, subprotocol=subprotocol, extensions=extensions
             ),
         )
+
+        # Execute replay strategy after reconnection
+        if is_reconnect:
+            await self._replay_on_reconnect()
 
         # Start heartbeat if configured
         if self._heartbeat_config is not None:
@@ -657,6 +678,9 @@ class WebSocketManager(Generic[T]):
                     ):
                         continue
 
+                    # Track message in buffer for replay
+                    await self._track_received_message(data)
+
                     await self._emit(
                         "message", MessageEvent(data=data, raw=frame.payload)
                     )
@@ -845,3 +869,109 @@ class WebSocketManager(Generic[T]):
     def _is_fatal_code(self, code: int) -> bool:
         """Check if a close code is fatal (no retry)."""
         return code in _FATAL_WS_CODES
+
+    async def _replay_on_reconnect(self) -> None:
+        """Execute replay strategy after reconnection.
+
+        This method is called after a successful reconnection to replay
+        messages according to the configured replay strategy.
+        """
+        if self._replay_config is None or self._replay_config.mode == "none":
+            return
+
+        mode = self._replay_config.mode
+        start_time = time.monotonic()
+
+        # Get buffer state
+        last_seq = self._buffer.last_sequence_id if self._buffer else None
+        message_count = len(self._buffer) if self._buffer else 0
+
+        # Emit replay started event
+        await self._emit(
+            "replay_started",
+            ReplayStartedEvent(
+                mode=mode,
+                last_sequence_id=last_seq,
+                message_count=message_count,
+            ),
+        )
+
+        replayed_count = 0
+
+        if mode == "sequence_id":
+            # Call the on_replay callback with last sequence ID
+            if last_seq is not None and self._replay_config.on_replay is not None:
+                try:
+                    await self._replay_config.on_replay(last_seq)
+                    replayed_count = 1  # Callback was executed
+                except Exception as e:
+                    self._stats.record_error()
+                    await self._emit("error", ErrorEvent(error=e, fatal=False))
+
+        elif mode == "full_buffer" and self._buffer is not None:
+            # Resend all buffered messages
+            messages = self._buffer.drain()
+            for msg in messages:
+                try:
+                    await self.send(msg)
+                    replayed_count += 1
+                except Exception as e:
+                    self._stats.record_error()
+                    await self._emit("error", ErrorEvent(error=e, fatal=False))
+                    break
+
+        # Emit replay completed event
+        duration_ms = (time.monotonic() - start_time) * 1000
+        await self._emit(
+            "replay_completed",
+            ReplayCompletedEvent(
+                mode=mode,
+                replayed_count=replayed_count,
+                duration_ms=duration_ms,
+            ),
+        )
+
+    async def _track_received_message(self, data: T) -> None:
+        """Track a received message in the buffer for replay.
+
+        Args:
+            data: The deserialized message data.
+        """
+        if self._buffer is None or self._replay_config is None:
+            return
+
+        # Extract sequence ID if configured
+        sequence_id = None
+        if self._replay_config.sequence_extractor is not None:
+            with contextlib.suppress(Exception):
+                sequence_id = self._replay_config.sequence_extractor(data)
+
+        # Push to buffer
+        prev_dropped = self._buffer.total_dropped
+        with contextlib.suppress(Exception):
+            self._buffer.push(data, sequence_id)
+
+        # Check for buffer overflow
+        if self._buffer.total_dropped > prev_dropped:
+            dropped_count = self._buffer.total_dropped - self._last_dropped_count
+            self._last_dropped_count = self._buffer.total_dropped
+            await self._emit(
+                "buffer_overflow",
+                BufferOverflowEvent(
+                    capacity=self._buffer.capacity,
+                    dropped_count=dropped_count,
+                    policy=self._buffer_config.overflow_policy
+                    if self._buffer_config
+                    else "drop_oldest",
+                ),
+            )
+
+    @property
+    def buffer(self) -> MessageBuffer[T] | None:
+        """Get the message buffer, if configured."""
+        return self._buffer
+
+    @property
+    def buffer_fill_ratio(self) -> float:
+        """Get the buffer fill ratio (0.0 to 1.0), or 0.0 if no buffer."""
+        return self._buffer.fill_ratio if self._buffer else 0.0
