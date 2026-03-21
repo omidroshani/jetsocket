@@ -168,3 +168,37 @@ class InvalidStateError(WSFabricError):
         super().__init__(message)
         self.current_state = current_state
         self.required_states = required_states or []
+
+
+class PoolExhaustedError(WSFabricError):
+    """Raised when connection pool has no available connections.
+
+    This occurs when all connections are in use and the acquire timeout
+    has been exceeded.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        max_connections: int,
+        timeout: float,
+    ) -> None:
+        """Initialize pool exhausted error.
+
+        Args:
+            message: Human-readable error description.
+            max_connections: Maximum connections configured for the pool.
+            timeout: The acquire timeout that was exceeded.
+        """
+        super().__init__(message)
+        self.max_connections = max_connections
+        self.timeout = timeout
+
+
+class PoolClosedError(WSFabricError):
+    """Raised when operating on a closed pool.
+
+    This occurs when attempting to acquire a connection from a pool
+    that has already been closed.
+    """
