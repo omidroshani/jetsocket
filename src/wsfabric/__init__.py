@@ -24,29 +24,29 @@ import importlib
 
 __version__ = "0.1.0"
 __all__ = [
-    # Main API
-    "WebSocketManager",
-    # Configuration
     "BackoffConfig",
-    "HeartbeatConfig",
-    # State & Stats
-    "ConnectionState",
-    "ConnectionStats",
-    # Types
-    "Frame",
-    "Opcode",
-    # Exceptions
+    "BufferConfig",
+    "BufferOverflowError",
     "CloseError",
     "ConnectionError",
+    "ConnectionState",
+    "ConnectionStats",
+    "Frame",
     "HandshakeError",
+    "HeartbeatConfig",
     "InvalidStateError",
+    "MessageBuffer",
+    "Opcode",
     "ProtocolError",
+    "ReplayConfig",
     "TimeoutError",
     "WSFabricError",
+    "WebSocketManager",
 ]
 
 # Import from submodules - lazy imports for fast startup
 from wsfabric.exceptions import (
+    BufferOverflowError,
     CloseError,
     ConnectionError,
     HandshakeError,
@@ -64,6 +64,9 @@ _lazy_imports: dict[str, str] = {
     "BackoffConfig": "wsfabric.backoff",
     "HeartbeatConfig": "wsfabric.heartbeat",
     "ConnectionStats": "wsfabric.stats",
+    "BufferConfig": "wsfabric.buffer",
+    "ReplayConfig": "wsfabric.buffer",
+    "MessageBuffer": "wsfabric.buffer",
 }
 
 
