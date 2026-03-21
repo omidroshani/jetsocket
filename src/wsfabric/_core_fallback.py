@@ -14,6 +14,7 @@ import base64
 import hashlib
 import os
 import struct
+import zlib
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import TYPE_CHECKING
@@ -181,6 +182,7 @@ class FrameParser:
         payload: bytes,
         mask: bool = True,
         fin: bool = True,
+        rsv1: bool = False,
     ) -> bytes:
         """Encode a frame for sending.
 
@@ -189,11 +191,12 @@ class FrameParser:
             payload: The payload bytes.
             mask: Whether to mask the frame (required for client-to-server).
             fin: Whether this is the final fragment.
+            rsv1: Whether to set the RSV1 bit (for compression).
 
         Returns:
             The encoded frame as bytes.
         """
-        return self._encode_frame(opcode, payload, mask, fin)
+        return self._encode_frame(opcode, payload, mask, fin, rsv1=rsv1)
 
     def encode_close(
         self,
@@ -323,13 +326,16 @@ class FrameParser:
         payload: bytes,
         mask: bool,
         fin: bool,
+        rsv1: bool = False,
     ) -> bytes:
         """Encode a frame for sending."""
         payload_len = len(payload)
         frame_parts: list[bytes] = []
 
-        # First byte: FIN + opcode
+        # First byte: FIN + RSV1 + opcode
         first_byte = (0x80 if fin else 0x00) | int(opcode)
+        if rsv1:
+            first_byte |= 0x40
         frame_parts.append(bytes([first_byte]))
 
         # Second byte and extended length
@@ -514,6 +520,189 @@ class HandshakeResult:
     headers: dict[str, str]
     subprotocol: str | None
     extensions: list[str]
+
+
+def validate_utf8(data: bytes) -> bool:
+    """Check if data is valid UTF-8.
+
+    Args:
+        data: The bytes to validate.
+
+    Returns:
+        True if data is valid UTF-8, False otherwise.
+    """
+    try:
+        data.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return True
+
+
+def parse_deflate_params(
+    extension_str: str,
+) -> tuple[bool, bool, int, int]:
+    """Parse permessage-deflate extension parameters.
+
+    Args:
+        extension_str: The Sec-WebSocket-Extensions header value.
+
+    Returns:
+        Tuple of (client_no_context_takeover, server_no_context_takeover,
+                  client_max_window_bits, server_max_window_bits).
+    """
+    client_no_context_takeover = False
+    server_no_context_takeover = False
+    client_max_window_bits = 15
+    server_max_window_bits = 15
+
+    for raw_part in extension_str.split(";"):
+        token = raw_part.strip()
+        if token.lower() == "permessage-deflate" or not token:
+            continue
+
+        if "=" in token:
+            key, value = token.split("=", 1)
+            key = key.strip()
+            value = value.strip()
+            if key == "client_max_window_bits":
+                client_max_window_bits = int(value)
+            elif key == "server_max_window_bits":
+                server_max_window_bits = int(value)
+        elif token == "client_no_context_takeover":
+            client_no_context_takeover = True
+        elif token == "server_no_context_takeover":
+            server_no_context_takeover = True
+
+    return (
+        client_no_context_takeover,
+        server_no_context_takeover,
+        client_max_window_bits,
+        server_max_window_bits,
+    )
+
+
+_DEFLATE_TRAILER = b"\x00\x00\xff\xff"
+
+
+class Deflater:
+    """Pure-Python permessage-deflate compressor/decompressor.
+
+    Uses Python's zlib module with raw deflate (wbits=-15).
+    """
+
+    def __init__(
+        self,
+        client_no_context_takeover: bool = False,
+        server_no_context_takeover: bool = False,
+        client_max_window_bits: int = 15,
+        server_max_window_bits: int = 15,
+    ) -> None:
+        """Create a new Deflater.
+
+        Args:
+            client_no_context_takeover: Reset compressor after each message.
+            server_no_context_takeover: Reset decompressor after each message.
+            client_max_window_bits: LZ77 window size for compression (9-15).
+            server_max_window_bits: LZ77 window size for decompression (9-15).
+        """
+        if not (9 <= client_max_window_bits <= 15):
+            msg = "client_max_window_bits must be between 9 and 15"
+            raise ValueError(msg)
+        if not (9 <= server_max_window_bits <= 15):
+            msg = "server_max_window_bits must be between 9 and 15"
+            raise ValueError(msg)
+
+        self._client_no_context_takeover = client_no_context_takeover
+        self._server_no_context_takeover = server_no_context_takeover
+        self._client_max_window_bits = client_max_window_bits
+        self._server_max_window_bits = server_max_window_bits
+
+        self._compressor = zlib.compressobj(
+            zlib.Z_DEFAULT_COMPRESSION, zlib.DEFLATED, -client_max_window_bits
+        )
+        self._decompressor = zlib.decompressobj(-server_max_window_bits)
+
+    @property
+    def client_no_context_takeover(self) -> bool:
+        """Get client_no_context_takeover setting."""
+        return self._client_no_context_takeover
+
+    @property
+    def server_no_context_takeover(self) -> bool:
+        """Get server_no_context_takeover setting."""
+        return self._server_no_context_takeover
+
+    @property
+    def client_max_window_bits(self) -> int:
+        """Get client_max_window_bits setting."""
+        return self._client_max_window_bits
+
+    @property
+    def server_max_window_bits(self) -> int:
+        """Get server_max_window_bits setting."""
+        return self._server_max_window_bits
+
+    def compress(self, data: bytes) -> bytes:
+        """Compress a message payload for sending.
+
+        Args:
+            data: The payload bytes to compress.
+
+        Returns:
+            Compressed bytes with trailing sync marker stripped.
+        """
+        compressed = self._compressor.compress(data)
+        compressed += self._compressor.flush(zlib.Z_SYNC_FLUSH)
+
+        # Strip trailing 0x00 0x00 0xFF 0xFF per RFC 7692
+        if compressed.endswith(_DEFLATE_TRAILER):
+            compressed = compressed[: -len(_DEFLATE_TRAILER)]
+
+        if self._client_no_context_takeover:
+            self._compressor = zlib.compressobj(
+                zlib.Z_DEFAULT_COMPRESSION,
+                zlib.DEFLATED,
+                -self._client_max_window_bits,
+            )
+
+        return compressed
+
+    def decompress(self, data: bytes) -> bytes:
+        """Decompress a received message payload.
+
+        Args:
+            data: The compressed payload bytes.
+
+        Returns:
+            Decompressed bytes.
+        """
+        # Append trailing bytes per RFC 7692
+        decompressed = self._decompressor.decompress(data + _DEFLATE_TRAILER)
+
+        if self._server_no_context_takeover:
+            self._decompressor = zlib.decompressobj(-self._server_max_window_bits)
+
+        return decompressed
+
+    def reset_compressor(self) -> None:
+        """Reset the compressor state."""
+        self._compressor = zlib.compressobj(
+            zlib.Z_DEFAULT_COMPRESSION,
+            zlib.DEFLATED,
+            -self._client_max_window_bits,
+        )
+
+    def reset_decompressor(self) -> None:
+        """Reset the decompressor state."""
+        self._decompressor = zlib.decompressobj(-self._server_max_window_bits)
+
+    def __repr__(self) -> str:
+        return (
+            f"Deflater(client_no_context_takeover={self._client_no_context_takeover}, "
+            f"server_no_context_takeover={self._server_no_context_takeover}, "
+            f"client_max_window_bits={self._client_max_window_bits}, "
+            f"server_max_window_bits={self._server_max_window_bits})"
+        )
 
 
 # Overflow policy enum for RingBuffer

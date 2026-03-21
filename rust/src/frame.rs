@@ -91,9 +91,11 @@ impl PyFrame {
         self.payload.len()
     }
 
-    /// Decode payload as UTF-8 text.
+    /// Decode payload as UTF-8 text (SIMD-accelerated validation).
     fn as_text(&self) -> PyResult<String> {
-        String::from_utf8(self.payload.clone())
+        // Use simdutf8 for fast validation, then convert without re-validating
+        simdutf8::basic::from_utf8(&self.payload)
+            .map(|s| s.to_string())
             .map_err(|_| ProtocolError::InvalidUtf8.into())
     }
 
@@ -172,7 +174,7 @@ impl FrameParser {
     ///     payload: The payload bytes
     ///     mask: Whether to mask the frame (required for client-to-server)
     ///     fin: Whether this is the final fragment
-    #[pyo3(signature = (opcode, payload, mask=true, fin=true))]
+    #[pyo3(signature = (opcode, payload, mask=true, fin=true, rsv1=false))]
     pub fn encode<'py>(
         &self,
         py: Python<'py>,
@@ -180,9 +182,10 @@ impl FrameParser {
         payload: &[u8],
         mask: bool,
         fin: bool,
+        rsv1: bool,
     ) -> PyResult<Bound<'py, PyBytes>> {
         let opcode = Opcode::from_u8(opcode)?;
-        let frame = self.encode_frame(opcode, payload, mask, fin)?;
+        let frame = self.encode_frame(opcode, payload, mask, fin, rsv1)?;
         Ok(PyBytes::new_bound(py, &frame))
     }
 
@@ -197,7 +200,7 @@ impl FrameParser {
     ) -> PyResult<Bound<'py, PyBytes>> {
         let mut payload = code.to_be_bytes().to_vec();
         payload.extend_from_slice(reason.as_bytes());
-        let frame = self.encode_frame(Opcode::Close, &payload, mask, true)?;
+        let frame = self.encode_frame(Opcode::Close, &payload, mask, true, false)?;
         Ok(PyBytes::new_bound(py, &frame))
     }
 
@@ -332,6 +335,7 @@ impl FrameParser {
         payload: &[u8],
         mask: bool,
         fin: bool,
+        rsv1: bool,
     ) -> Result<Vec<u8>, ProtocolError> {
         let payload_len = payload.len();
 
@@ -348,8 +352,11 @@ impl FrameParser {
 
         let mut frame = Vec::with_capacity(header_size + payload_len);
 
-        // First byte: FIN + opcode
-        let first_byte = if fin { 0x80 } else { 0x00 } | (opcode as u8);
+        // First byte: FIN + RSV1 + opcode
+        let mut first_byte = if fin { 0x80 } else { 0x00 } | (opcode as u8);
+        if rsv1 {
+            first_byte |= 0x40;
+        }
         frame.push(first_byte);
 
         // Second byte and extended length
