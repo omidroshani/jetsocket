@@ -152,29 +152,4 @@ replay = ReplayConfig(
 
 ## ConnectionPoolConfig
 
-Controls connection pool behavior.
-
-::: jetsocket.pool.ConnectionPoolConfig
-    options:
-      show_source: true
-
-### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `max_connections` | int | 10 | Maximum concurrent connections |
-| `max_idle_time` | float | 300.0 | Close idle connections after N seconds |
-| `health_check_interval` | float | 30.0 | Interval between health checks |
-| `acquire_timeout` | float | 10.0 | Timeout for acquiring connection |
-
-### Example
-
-```python
-from jetsocket import ConnectionPoolConfig
-
-config = ConnectionPoolConfig(
-    max_connections=20,
-    max_idle_time=600.0,
-    health_check_interval=60.0,
-)
-```
+See [ConnectionPool API reference](pool.md) for connection pool configuration.
