@@ -317,7 +317,7 @@ class MessageBuffer(Generic[T]):
         Returns:
             The oldest message, or None if the buffer is empty.
         """
-        return self._buffer.pop() # type: ignore[return-value]
+        return self._buffer.pop()  # type: ignore[return-value]
 
     def drain(self) -> list[T]:
         """Drain all messages from the buffer.
@@ -325,7 +325,7 @@ class MessageBuffer(Generic[T]):
         Returns:
             List of messages in FIFO order.
         """
-        return self._buffer.drain() # type: ignore[return-value]
+        return self._buffer.drain()  # type: ignore[return-value]
 
     def drain_with_sequences(self) -> list[tuple[T, SequenceId | None]]:
         """Drain all messages with their sequence IDs.
@@ -333,7 +333,7 @@ class MessageBuffer(Generic[T]):
         Returns:
             List of (message, sequence_id) tuples in FIFO order.
         """
-        return self._buffer.drain_with_sequences() # type: ignore[return-value]
+        return self._buffer.drain_with_sequences()  # type: ignore[return-value]
 
     def is_duplicate(self, sequence_id: SequenceId) -> bool:
         """Check if a sequence ID has been seen recently.

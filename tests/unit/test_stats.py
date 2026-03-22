@@ -259,7 +259,7 @@ class TestMutableStatsSnapshot:
         stats = _MutableStats()
         stats.state = ConnectionState.CONNECTED
         stats.mark_connected()
-        time.sleep(0.05)
+        time.sleep(0.1)
 
         snapshot = stats.snapshot()
 

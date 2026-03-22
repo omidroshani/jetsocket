@@ -153,7 +153,7 @@ class TestPooledConnectionState:
         assert state.idle_time < 1.0
 
         # Wait a bit
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         assert state.idle_time >= 0.1
 

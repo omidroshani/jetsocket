@@ -338,7 +338,7 @@ class SyncTransport(AbstractTransport):
         rsv1 = frame.rsv1
         if (
             self._deflater is not None
-            and not frame.opcode.is_control_frame 
+            and not frame.opcode.is_control_frame
             and len(payload) >= self._config.compression_threshold
         ):
             payload = self._deflater.compress(payload)

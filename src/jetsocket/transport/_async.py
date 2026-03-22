@@ -571,7 +571,7 @@ class AsyncTransport(AbstractTransport):
             if int(frame.opcode) == 0xA:
                 continue
 
-            return frame # type: ignore[no-any-return]
+            return frame  # type: ignore[no-any-return]
 
     async def ping(self, payload: bytes = b"") -> None:
         """Send a ping frame."""
