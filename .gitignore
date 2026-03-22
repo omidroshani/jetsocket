@@ -1,4 +1,4 @@
-# Documentation and internal files
+# Internal files
 .docs
 CLAUDE.md
 
@@ -24,6 +24,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# Cython generated C files
+*.c
+!src/jetsocket/_core.pyx
+
 # Virtual environments
 .venv/
 venv/
@@ -48,17 +52,12 @@ htmlcov/
 *.swp
 *.swo
 
-# Cython / C extensions
-*.so
-*.c
-!src/jetsocket/_core.pyx
-build/
-
-# Rust (legacy, removed)
-target/
-Cargo.lock
-*.dSYM/
-
 # OS
 .DS_Store
 Thumbs.db
+
+# Debug symbols
+*.dSYM/
+
+# Logs
+*.log
