@@ -6,10 +6,17 @@ Understanding the core concepts of WSFabric will help you use it effectively.
 
 WSFabric manages WebSocket connections through a state machine:
 
-```
-IDLE → CONNECTING → CONNECTED → DISCONNECTING → DISCONNECTED/CLOSED
-                  ↓
-              RECONNECTING → BACKING_OFF → CONNECTING
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE
+    IDLE --> CONNECTING
+    CONNECTING --> CONNECTED
+    CONNECTED --> DISCONNECTING
+    DISCONNECTING --> DISCONNECTED
+    DISCONNECTING --> CLOSED
+    CONNECTING --> RECONNECTING
+    RECONNECTING --> BACKING_OFF
+    BACKING_OFF --> CONNECTING
 ```
 
 ### States
@@ -90,31 +97,18 @@ buffer = BufferConfig(
 
 ## Message Flow
 
-```
-┌─────────────┐     send()      ┌─────────────────┐
-│  Your Code  │ ──────────────→ │                 │
-│             │                 │  WebSocketManager │
-│             │ ←────────────── │                 │
-└─────────────┘   on("message") └─────────────────┘
-                                        │
-                                        │ serializer/
-                                        │ deserializer
-                                        ↓
-                                ┌───────────────┐
-                                │  Transport    │
-                                │  (async/sync) │
-                                └───────────────┘
-                                        │
-                                        ↓
-                                ┌───────────────┐
-                                │   Network     │
-                                └───────────────┘
+```mermaid
+flowchart LR
+    A[Your Code] -->|send| B[WebSocket]
+    B -->|on message| A
+    B -->|serializer / deserializer| C[Transport<br>async/sync]
+    C --> D[Network]
 ```
 
 ## Thread Safety
 
-- **WebSocketManager**: Async, not thread-safe. Use from a single async context.
-- **SyncWebSocketClient**: Thread-safe. Uses a background thread with event loop.
+- **WebSocket**: Async, not thread-safe. Use from a single async context.
+- **SyncWebSocket**: Thread-safe. Uses a background thread with event loop.
 - **ConnectionPool**: Async, can be shared across tasks but not threads.
 
 ## Error Handling

@@ -1,7 +1,7 @@
 """Real-time Binance trade streaming with multiplexing.
 
 This example demonstrates:
-- Using MultiplexConnection for multiple subscriptions over single WebSocket
+- Using Multiplex for multiple subscriptions over single WebSocket
 - Parsing trades with Pydantic models
 - Concurrent processing of multiple streams
 """
@@ -12,7 +12,7 @@ import asyncio
 
 from pydantic import BaseModel, Field
 
-from wsfabric import MultiplexConfig, MultiplexConnection
+from wsfabric import Multiplex
 
 
 class BinanceTrade(BaseModel):
@@ -43,27 +43,21 @@ async def process_trades(sub, name: str) -> None:
 
 async def main() -> None:
     """Stream BTC and ETH trades from Binance."""
-    config = MultiplexConfig(
-        channel_extractor=lambda msg: msg.get("stream"),
-        subscribe_message=lambda ch: {
+    async with Multiplex(
+        "wss://stream.binance.com:9443/ws",
+        channel_key="stream",
+        subscribe_msg=lambda ch: {
             "method": "SUBSCRIBE",
             "params": [ch],
             "id": 1,
         },
-        unsubscribe_message=lambda ch: {
+        unsubscribe_msg=lambda ch: {
             "method": "UNSUBSCRIBE",
             "params": [ch],
             "id": 2,
         },
-    )
-
-    async with MultiplexConnection(
-        "wss://stream.binance.com:9443/ws",
-        config,
-        manager_kwargs={
-            "reconnect": True,
-            "heartbeat": {"interval": 20.0, "timeout": 10.0},
-        },
+        reconnect=True,
+        heartbeat=20.0,
     ) as mux:
         # Subscribe to multiple symbols
         btc = await mux.subscribe("btcusdt@trade")

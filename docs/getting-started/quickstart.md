@@ -8,10 +8,10 @@ This guide will get you up and running with WSFabric in under 5 minutes.
 
 ```python
 import asyncio
-from wsfabric import WebSocketManager
+from wsfabric import WebSocket
 
 async def main():
-    ws = WebSocketManager("wss://echo.websocket.org")
+    ws = WebSocket("wss://echo.websocket.org")
 
     @ws.on("message")
     async def on_message(event):
@@ -30,9 +30,9 @@ asyncio.run(main())
 ### Sync Usage
 
 ```python
-from wsfabric import SyncWebSocketClient
+from wsfabric import SyncWebSocket
 
-with SyncWebSocketClient("wss://echo.websocket.org") as ws:
+with SyncWebSocket("wss://echo.websocket.org") as ws:
     ws.send({"hello": "world"})
 
     # Receive with timeout
@@ -50,7 +50,7 @@ Both async and sync clients support context managers for automatic cleanup:
 === "Async"
 
     ```python
-    async with WebSocketManager("wss://example.com/ws") as ws:
+    async with WebSocket("wss://example.com/ws") as ws:
         await ws.send({"subscribe": "updates"})
         async for message in ws:
             print(message)
@@ -59,7 +59,7 @@ Both async and sync clients support context managers for automatic cleanup:
 === "Sync"
 
     ```python
-    with SyncWebSocketClient("wss://example.com/ws") as ws:
+    with SyncWebSocket("wss://example.com/ws") as ws:
         ws.send({"subscribe": "updates"})
         for message in ws:
             print(message)
@@ -70,9 +70,9 @@ Both async and sync clients support context managers for automatic cleanup:
 WSFabric provides a rich event system for monitoring connection lifecycle:
 
 ```python
-from wsfabric import WebSocketManager
+from wsfabric import WebSocket
 
-ws = WebSocketManager("wss://example.com/ws")
+ws = WebSocket("wss://example.com/ws")
 
 @ws.on("connected")
 async def on_connect(event):
@@ -96,16 +96,16 @@ async def on_message(event):
 WSFabric provides optimized presets for common use cases:
 
 ```python
-from wsfabric import Presets
+from wsfabric.presets import trading, llm_stream, dashboard
 
 # For crypto trading - fast reconnect, large buffer
-ws = Presets.trading("wss://stream.binance.com/ws")
+ws = trading("wss://stream.binance.com/ws")
 
 # For LLM streaming - large messages, quick retry
-ws = Presets.llm_stream("wss://api.openai.com/v1/realtime")
+ws = llm_stream("wss://api.openai.com/v1/realtime")
 
 # For dashboards - relaxed reconnect, small buffer
-ws = Presets.dashboard("wss://dashboard.example.com/ws")
+ws = dashboard("wss://dashboard.example.com/ws")
 ```
 
 ## Typed Messages with Pydantic
@@ -114,14 +114,14 @@ For type-safe message handling:
 
 ```python
 from pydantic import BaseModel
-from wsfabric import TypedWebSocket
+from wsfabric import WebSocket
 
 class TradeMessage(BaseModel):
     symbol: str
     price: float
     quantity: float
 
-async with TypedWebSocket("wss://stream.example.com/ws", TradeMessage) as ws:
+async with WebSocket("wss://stream.example.com/ws", message_type=TradeMessage) as ws:
     async for trade in ws:  # trade is TradeMessage
         print(f"{trade.symbol}: ${trade.price:.2f}")
 ```

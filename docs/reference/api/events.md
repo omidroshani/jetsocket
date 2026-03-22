@@ -40,9 +40,9 @@ WSFabric uses an event-driven architecture for connection lifecycle and message 
 Use the `@ws.on()` decorator:
 
 ```python
-from wsfabric import WebSocketManager
+from wsfabric import WebSocket
 
-ws = WebSocketManager("wss://example.com/ws")
+ws = WebSocket("wss://example.com/ws")
 
 @ws.on("connected")
 async def on_connected(event):

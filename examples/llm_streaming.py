@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 
-from wsfabric import Presets
+from wsfabric.presets import llm_stream
 
 
 async def stream_completion(uri: str, prompt: str) -> None:
@@ -21,7 +21,7 @@ async def stream_completion(uri: str, prompt: str) -> None:
         prompt: The prompt to send.
     """
     # Use LLM preset: quick retry, large messages, no compression
-    ws = Presets.llm_stream(uri)
+    ws = llm_stream(uri)
 
     @ws.on("connected")
     async def on_connected(event) -> None:

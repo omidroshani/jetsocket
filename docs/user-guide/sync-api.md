@@ -2,14 +2,14 @@
 
 WSFabric provides a synchronous API that wraps the async implementation with a background thread.
 
-## SyncWebSocketClient
+## SyncWebSocket
 
 The sync client provides blocking operations for non-async codebases:
 
 ```python
-from wsfabric import SyncWebSocketClient
+from wsfabric import SyncWebSocket
 
-ws = SyncWebSocketClient("wss://example.com/ws")
+ws = SyncWebSocket("wss://example.com/ws")
 ws.connect()
 
 ws.send({"subscribe": "updates"})
@@ -22,7 +22,7 @@ ws.close()
 ### Context Manager
 
 ```python
-with SyncWebSocketClient("wss://example.com/ws") as ws:
+with SyncWebSocket("wss://example.com/ws") as ws:
     ws.send({"subscribe": "updates"})
     for message in ws:
         print(message)
@@ -30,16 +30,16 @@ with SyncWebSocketClient("wss://example.com/ws") as ws:
 
 ### Configuration
 
-All WebSocketManager options are supported:
+All WebSocket options are supported:
 
 ```python
 from wsfabric import (
-    SyncWebSocketClient,
+    SyncWebSocket,
     BackoffConfig,
     HeartbeatConfig,
 )
 
-ws = SyncWebSocketClient(
+ws = SyncWebSocket(
     "wss://example.com/ws",
     reconnect=True,
     backoff=BackoffConfig(base=1.0, cap=30.0),
@@ -89,10 +89,10 @@ print(f"Messages: {stats.messages_received}")
 ## Full Example
 
 ```python
-from wsfabric import SyncWebSocketClient, BackoffConfig
+from wsfabric import SyncWebSocket, BackoffConfig
 
 def main():
-    ws = SyncWebSocketClient(
+    ws = SyncWebSocket(
         "wss://stream.example.com/ws",
         reconnect=True,
         backoff=BackoffConfig(base=1.0, cap=30.0),

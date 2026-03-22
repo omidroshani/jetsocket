@@ -1,4 +1,4 @@
-# MultiplexConnection
+# Multiplex
 
 Manages multiple logical subscriptions over a single WebSocket connection.
 
@@ -15,10 +15,6 @@ Manages multiple logical subscriptions over a single WebSocket connection.
         - list_subscriptions
         - stats
 
-::: wsfabric.multiplex.MultiplexConfig
-    options:
-      show_source: true
-
 ::: wsfabric.multiplex.Subscription
     options:
       show_source: true
@@ -32,16 +28,15 @@ Manages multiple logical subscriptions over a single WebSocket connection.
 ## Usage
 
 ```python
-from wsfabric import MultiplexConnection, MultiplexConfig
+from wsfabric import Multiplex
 
-config = MultiplexConfig(
-    channel_extractor=lambda msg: msg.get("stream"),
-    subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
-    unsubscribe_message=lambda ch: {"method": "UNSUBSCRIBE", "params": [ch]},
+async with Multiplex(
+    "wss://stream.binance.com/ws",
+    channel_key="stream",
+    subscribe_msg=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
+    unsubscribe_msg=lambda ch: {"method": "UNSUBSCRIBE", "params": [ch]},
     queue_size=1000,
-)
-
-async with MultiplexConnection("wss://stream.binance.com/ws", config) as mux:
+) as mux:
     btc = await mux.subscribe("btcusdt@trade")
     eth = await mux.subscribe("ethusdt@trade")
 
@@ -51,25 +46,30 @@ async with MultiplexConnection("wss://stream.binance.com/ws", config) as mux:
 
 ## Configuration
 
-### channel_extractor (required)
+### channel_key / channel_extractor
 
-Function to extract the channel name from incoming messages:
+Use `channel_key` for simple key-based routing, or `channel_extractor` for custom logic:
 
 ```python
 # Binance: {"stream": "btcusdt@trade", "data": {...}}
-channel_extractor=lambda msg: msg.get("stream")
+async with Multiplex("wss://...", channel_key="stream") as mux:
+    ...
 
 # Bybit: {"topic": "trade.BTCUSDT", ...}
-channel_extractor=lambda msg: msg.get("topic")
+async with Multiplex(
+    "wss://...",
+    channel_extractor=lambda msg: msg.get("topic"),
+) as mux:
+    ...
 ```
 
-### subscribe_message / unsubscribe_message (optional)
+### subscribe_msg / unsubscribe_msg (optional)
 
 Functions to generate protocol-specific messages:
 
 ```python
-subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]}
-unsubscribe_message=lambda ch: {"method": "UNSUBSCRIBE", "params": [ch]}
+subscribe_msg=lambda ch: {"method": "SUBSCRIBE", "params": [ch]}
+unsubscribe_msg=lambda ch: {"method": "UNSUBSCRIBE", "params": [ch]}
 ```
 
 ### queue_size
@@ -77,10 +77,12 @@ unsubscribe_message=lambda ch: {"method": "UNSUBSCRIBE", "params": [ch]}
 Maximum messages per subscription queue (default: 1000, 0 = unbounded):
 
 ```python
-config = MultiplexConfig(
-    channel_extractor=...,
+async with Multiplex(
+    "wss://...",
+    channel_key="stream",
     queue_size=5000,  # Large buffer for high-throughput streams
-)
+) as mux:
+    ...
 ```
 
 ## Statistics

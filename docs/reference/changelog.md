@@ -9,12 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `MultiplexConnection` for managing multiple logical subscriptions over a single WebSocket
-- `TypedWebSocket` for Pydantic-validated messages
-- `Presets` class with pre-configured profiles (trading, llm_stream, dashboard, minimal)
+- `Multiplex` for managing multiple logical subscriptions over a single WebSocket
+- `WebSocket(message_type=...)` for Pydantic-validated messages
+- Preset functions (`trading`, `llm_stream`, `dashboard`, `minimal`) in `wsfabric.presets`
 - `py.typed` marker for PEP 561 type checking support
 - Connection pooling with `ConnectionPool` and `ConnectionPoolConfig`
-- Synchronous API with `SyncWebSocketClient`
+- Synchronous API with `SyncWebSocket`
 - Message buffering with `BufferConfig`
 - Replay-on-reconnect with `ReplayConfig`
 
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial release
-- `WebSocketManager` async WebSocket client
+- `WebSocket` async WebSocket client
 - Automatic reconnection with exponential backoff
 - Heartbeat management (ping/pong)
 - Event-driven architecture

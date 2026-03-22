@@ -1,14 +1,14 @@
 """Simple sync WebSocket client for scripting.
 
 This example demonstrates:
-- Using SyncWebSocketClient for blocking operations
+- Using SyncWebSocket for blocking operations
 - Simple one-shot requests
 - No async/await required
 """
 
 from __future__ import annotations
 
-from wsfabric import HeartbeatConfig, SyncWebSocketClient
+from wsfabric import HeartbeatConfig, SyncWebSocket
 
 
 def fetch_prices(symbols: list[str], count: int = 5) -> dict[str, list[float]]:
@@ -27,7 +27,7 @@ def fetch_prices(symbols: list[str], count: int = 5) -> dict[str, list[float]]:
     stream = "/".join(f"{s}@trade" for s in symbols)
     uri = f"wss://stream.binance.com:9443/stream?streams={stream}"
 
-    with SyncWebSocketClient(
+    with SyncWebSocket(
         uri,
         heartbeat=HeartbeatConfig(interval=20.0),
     ) as ws:

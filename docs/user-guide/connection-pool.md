@@ -93,9 +93,9 @@ except PoolExhaustedError as e:
     print(f"Pool exhausted: max={e.max_connections}, timeout={e.timeout}s")
 ```
 
-## Custom Manager Configuration
+## Custom WebSocket Configuration
 
-Pass additional WebSocketManager options:
+Pass additional WebSocket options:
 
 ```python
 pool = ConnectionPool(

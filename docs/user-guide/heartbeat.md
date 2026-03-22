@@ -5,9 +5,9 @@ WSFabric handles WebSocket ping/pong automatically to prevent idle disconnection
 ## Basic Configuration
 
 ```python
-from wsfabric import WebSocketManager, HeartbeatConfig
+from wsfabric import WebSocket, HeartbeatConfig
 
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://example.com/ws",
     heartbeat=HeartbeatConfig(
         interval=30.0,  # Send ping every 30 seconds
@@ -25,7 +25,7 @@ ws = WebSocketManager(
 ## Disabling Heartbeat
 
 ```python
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://example.com/ws",
     heartbeat=None,  # No heartbeat
 )

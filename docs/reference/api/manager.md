@@ -1,4 +1,4 @@
-# WebSocketManager
+# WebSocket
 
 The core async WebSocket client with automatic reconnection, heartbeat, and message buffering.
 
@@ -20,18 +20,18 @@ The core async WebSocket client with automatic reconnection, heartbeat, and mess
 
 ## Configuration
 
-WebSocketManager accepts several configuration objects:
+WebSocket accepts several configuration objects:
 
 ```python
 from wsfabric import (
-    WebSocketManager,
+    WebSocket,
     BackoffConfig,
     HeartbeatConfig,
     BufferConfig,
     ReplayConfig,
 )
 
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://example.com/ws",
     reconnect=True,
     backoff=BackoffConfig(base=1.0, multiplier=2.0, cap=60.0),
@@ -43,7 +43,7 @@ ws = WebSocketManager(
 
 ## Events
 
-WebSocketManager emits events that you can subscribe to:
+WebSocket emits events that you can subscribe to:
 
 | Event | Description |
 |-------|-------------|
@@ -71,10 +71,10 @@ async def on_message(event):
 
 ```python
 import asyncio
-from wsfabric import WebSocketManager, HeartbeatConfig
+from wsfabric import WebSocket, HeartbeatConfig
 
 async def main():
-    async with WebSocketManager(
+    async with WebSocket(
         "wss://stream.example.com/ws",
         reconnect=True,
         heartbeat=HeartbeatConfig(interval=20.0),

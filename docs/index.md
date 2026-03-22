@@ -16,9 +16,9 @@ WSFabric provides a high-performance, memory-efficient WebSocket client with:
 === "Async"
 
     ```python
-    from wsfabric import WebSocketManager
+    from wsfabric import WebSocket
 
-    async with WebSocketManager("wss://stream.example.com/ws") as ws:
+    async with WebSocket("wss://stream.example.com/ws") as ws:
         await ws.send({"subscribe": "trades"})
         async for message in ws:
             print(f"Received: {message}")
@@ -27,9 +27,9 @@ WSFabric provides a high-performance, memory-efficient WebSocket client with:
 === "Sync"
 
     ```python
-    from wsfabric import SyncWebSocketClient
+    from wsfabric import SyncWebSocket
 
-    with SyncWebSocketClient("wss://stream.example.com/ws") as ws:
+    with SyncWebSocket("wss://stream.example.com/ws") as ws:
         ws.send({"subscribe": "trades"})
         for message in ws:
             print(f"Received: {message}")
@@ -60,9 +60,9 @@ pip install wsfabric
 WSFabric handles disconnections gracefully with configurable exponential backoff:
 
 ```python
-from wsfabric import WebSocketManager, BackoffConfig
+from wsfabric import WebSocket, BackoffConfig
 
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://stream.example.com/ws",
     reconnect=True,
     backoff=BackoffConfig(
@@ -78,9 +78,9 @@ ws = WebSocketManager(
 Never worry about idle disconnections again:
 
 ```python
-from wsfabric import WebSocketManager, HeartbeatConfig
+from wsfabric import WebSocket, HeartbeatConfig
 
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://stream.example.com/ws",
     heartbeat=HeartbeatConfig(
         interval=20.0,  # Send ping every 20s
@@ -110,14 +110,13 @@ async with ConnectionPool(config, base_uri="wss://stream.example.com") as pool:
 Multiple subscriptions over a single connection:
 
 ```python
-from wsfabric import MultiplexConnection, MultiplexConfig
+from wsfabric import Multiplex
 
-config = MultiplexConfig(
-    channel_extractor=lambda msg: msg.get("stream"),
-    subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
-)
-
-async with MultiplexConnection("wss://stream.example.com/ws", config) as mux:
+async with Multiplex(
+    "wss://stream.example.com/ws",
+    channel_key="stream",
+    subscribe_msg=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
+) as mux:
     btc = await mux.subscribe("btcusdt@trade")
     eth = await mux.subscribe("ethusdt@trade")
 
@@ -131,14 +130,14 @@ Full type checking with Pydantic models:
 
 ```python
 from pydantic import BaseModel
-from wsfabric import TypedWebSocket
+from wsfabric import WebSocket
 
 class TradeMessage(BaseModel):
     symbol: str
     price: float
     quantity: float
 
-async with TypedWebSocket("wss://stream.example.com/ws", TradeMessage) as ws:
+async with WebSocket("wss://stream.example.com/ws", message_type=TradeMessage) as ws:
     async for trade in ws:  # trade is TradeMessage
         print(f"{trade.symbol}: ${trade.price:.2f}")
 ```
@@ -148,16 +147,16 @@ async with TypedWebSocket("wss://stream.example.com/ws", TradeMessage) as ws:
 Optimized configurations for different scenarios:
 
 ```python
-from wsfabric import Presets
+from wsfabric.presets import trading, llm_stream, dashboard
 
 # For crypto trading
-ws = Presets.trading("wss://stream.binance.com/ws")
+ws = trading("wss://stream.binance.com/ws")
 
 # For LLM streaming
-ws = Presets.llm_stream("wss://api.openai.com/v1/realtime")
+ws = llm_stream("wss://api.openai.com/v1/realtime")
 
 # For dashboards
-ws = Presets.dashboard("wss://dashboard.example.com/ws")
+ws = dashboard("wss://dashboard.example.com/ws")
 ```
 
 ## What's Next?

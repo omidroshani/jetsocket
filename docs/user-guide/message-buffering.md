@@ -5,9 +5,9 @@ WSFabric can buffer received messages with sequence tracking and deduplication.
 ## Basic Configuration
 
 ```python
-from wsfabric import WebSocketManager, BufferConfig
+from wsfabric import WebSocket, BufferConfig
 
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://example.com/ws",
     buffer=BufferConfig(
         capacity=1000,                  # Max messages to buffer
@@ -49,9 +49,9 @@ buffer = BufferConfig(
 WSFabric can replay messages after reconnection:
 
 ```python
-from wsfabric import WebSocketManager, BufferConfig, ReplayConfig
+from wsfabric import WebSocket, BufferConfig, ReplayConfig
 
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://example.com/ws",
     buffer=BufferConfig(capacity=1000),
     replay=ReplayConfig(

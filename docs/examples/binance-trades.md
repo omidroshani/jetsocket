@@ -25,7 +25,7 @@ from __future__ import annotations
 import asyncio
 from pydantic import BaseModel, Field
 
-from wsfabric import MultiplexConnection, MultiplexConfig
+from wsfabric import Multiplex
 
 
 class BinanceTrade(BaseModel):
@@ -56,27 +56,21 @@ async def process_trades(sub, name: str) -> None:
 
 async def main() -> None:
     """Stream BTC and ETH trades from Binance."""
-    config = MultiplexConfig(
-        channel_extractor=lambda msg: msg.get("stream"),
-        subscribe_message=lambda ch: {
+    async with Multiplex(
+        "wss://stream.binance.com:9443/ws",
+        channel_key="stream",
+        subscribe_msg=lambda ch: {
             "method": "SUBSCRIBE",
             "params": [ch],
             "id": 1,
         },
-        unsubscribe_message=lambda ch: {
+        unsubscribe_msg=lambda ch: {
             "method": "UNSUBSCRIBE",
             "params": [ch],
             "id": 2,
         },
-    )
-
-    async with MultiplexConnection(
-        "wss://stream.binance.com:9443/ws",
-        config,
-        manager_kwargs={
-            "reconnect": True,
-            "heartbeat": {"interval": 20.0, "timeout": 10.0},
-        },
+        reconnect=True,
+        heartbeat=20.0,
     ) as mux:
         # Subscribe to multiple symbols
         btc = await mux.subscribe("btcusdt@trade")
@@ -103,7 +97,7 @@ if __name__ == "__main__":
 
 ### Multiplexing
 
-Instead of opening separate connections for each symbol, we use `MultiplexConnection` to handle multiple subscriptions over a single WebSocket:
+Instead of opening separate connections for each symbol, we use `Multiplex` to handle multiple subscriptions over a single WebSocket:
 
 ```python
 btc = await mux.subscribe("btcusdt@trade")
@@ -158,12 +152,7 @@ btc_depth = await mux.subscribe("btcusdt@depth20@100ms")
 ### Using the Trading Preset
 
 ```python
-from wsfabric import Presets
+from wsfabric.presets import trading
 
-async with MultiplexConnection(
-    "wss://stream.binance.com:9443/ws",
-    config,
-    manager_kwargs=Presets.trading("").to_dict(),  # Get trading defaults
-) as mux:
-    ...
+ws = trading("wss://stream.binance.com:9443/ws")
 ```

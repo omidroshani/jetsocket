@@ -12,20 +12,20 @@ pip install wsfabric[pydantic]
 pip install pydantic
 ```
 
-## TypedWebSocket
+## WebSocket with `message_type`
 
-TypedWebSocket provides automatic validation and type hints:
+Pass a Pydantic model via `message_type=` for automatic validation and type hints:
 
 ```python
 from pydantic import BaseModel
-from wsfabric import TypedWebSocket
+from wsfabric import WebSocket
 
 class TradeMessage(BaseModel):
     symbol: str
     price: float
     quantity: float
 
-async with TypedWebSocket("wss://stream.example.com/ws", TradeMessage) as ws:
+async with WebSocket("wss://stream.example.com/ws", message_type=TradeMessage) as ws:
     async for trade in ws:  # trade: TradeMessage
         print(f"{trade.symbol}: ${trade.price:.2f} x {trade.quantity}")
 ```
@@ -86,7 +86,7 @@ class TradeInfo(BaseModel):
 Raises `ValidationError` on invalid messages:
 
 ```python
-ws = TypedWebSocket("wss://example.com/ws", TradeMessage, strict=True)
+ws = WebSocket("wss://example.com/ws", message_type=TradeMessage, strict=True)
 ```
 
 ### Non-Strict Mode
@@ -94,7 +94,7 @@ ws = TypedWebSocket("wss://example.com/ws", TradeMessage, strict=True)
 Logs warnings and skips invalid messages:
 
 ```python
-ws = TypedWebSocket("wss://example.com/ws", TradeMessage, strict=False)
+ws = WebSocket("wss://example.com/ws", message_type=TradeMessage, strict=False)
 
 # Check validation error count
 print(f"Validation errors: {ws.validation_errors}")
@@ -113,13 +113,13 @@ request = SubscribeRequest(method="SUBSCRIBE", params=["btcusdt@trade"])
 await ws.send(request)  # Automatically serialized to JSON
 ```
 
-## Combining with Presets
+## Combining with Configuration
 
 ```python
 # Create a typed trading client
-ws = TypedWebSocket(
+ws = WebSocket(
     "wss://stream.binance.com/ws",
-    TradeMessage,
+    message_type=TradeMessage,
     reconnect=True,
     heartbeat=HeartbeatConfig(interval=20.0),
     buffer=BufferConfig(capacity=10000),
@@ -131,7 +131,7 @@ ws = TypedWebSocket(
 ```python
 import asyncio
 from pydantic import BaseModel, Field
-from wsfabric import TypedWebSocket, HeartbeatConfig
+from wsfabric import WebSocket, HeartbeatConfig
 
 class BinanceTrade(BaseModel):
     event_type: str = Field(alias="e")
@@ -142,9 +142,9 @@ class BinanceTrade(BaseModel):
     is_buyer_maker: bool = Field(alias="m")
 
 async def main():
-    async with TypedWebSocket(
+    async with WebSocket(
         "wss://stream.binance.com:9443/ws/btcusdt@trade",
-        BinanceTrade,
+        message_type=BinanceTrade,
         heartbeat=HeartbeatConfig(interval=20.0),
     ) as ws:
         async for trade in ws:
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
 ## Type Checking Benefits
 
-With TypedWebSocket, your IDE provides:
+With `WebSocket(message_type=...)`, your IDE provides:
 
 - Autocomplete for message fields
 - Type error detection
@@ -165,6 +165,6 @@ With TypedWebSocket, your IDE provides:
 
 ```python
 async for trade in ws:
-    trade.symbol    # ✓ Autocomplete works
-    trade.invalid   # ✗ Type error detected
+    trade.symbol    # Autocomplete works
+    trade.invalid   # Type error detected
 ```

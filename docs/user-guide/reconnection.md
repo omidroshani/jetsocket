@@ -5,9 +5,9 @@ WSFabric provides automatic reconnection with configurable exponential backoff.
 ## Basic Configuration
 
 ```python
-from wsfabric import WebSocketManager, BackoffConfig
+from wsfabric import WebSocket, BackoffConfig
 
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://example.com/ws",
     reconnect=True,  # Enable auto-reconnect (default)
     backoff=BackoffConfig(
@@ -75,7 +75,7 @@ backoff = BackoffConfig(
 Some services (like Binance) force disconnect after 24 hours. WSFabric can proactively reconnect:
 
 ```python
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://stream.binance.com/ws",
     max_connection_age=85800.0,  # 23h 50m
 )
@@ -84,7 +84,7 @@ ws = WebSocketManager(
 ## Disabling Reconnection
 
 ```python
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://example.com/ws",
     reconnect=False,
 )

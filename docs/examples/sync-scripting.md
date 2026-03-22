@@ -4,7 +4,7 @@ This example demonstrates how to use the synchronous API for simple scripts and 
 
 ## Overview
 
-- Use `SyncWebSocketClient` for blocking operations
+- Use `SyncWebSocket` for blocking operations
 - Simple one-shot requests
 - Interactive scripting in notebooks
 - No async/await required
@@ -20,12 +20,12 @@ pip install wsfabric
 ```python
 """Simple sync WebSocket script."""
 
-from wsfabric import SyncWebSocketClient
+from wsfabric import SyncWebSocket
 
 
 def main():
     """Fetch current BTC price."""
-    with SyncWebSocketClient("wss://stream.binance.com:9443/ws/btcusdt@ticker") as ws:
+    with SyncWebSocket("wss://stream.binance.com:9443/ws/btcusdt@ticker") as ws:
         # Receive a single message
         ticker = ws.recv(timeout=5.0)
         price = float(ticker.get("c", 0))
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
 from __future__ import annotations
 
-from wsfabric import SyncWebSocketClient, HeartbeatConfig
+from wsfabric import SyncWebSocket, HeartbeatConfig
 
 
 def fetch_prices(symbols: list[str], count: int = 5) -> dict[str, list[float]]:
@@ -62,7 +62,7 @@ def fetch_prices(symbols: list[str], count: int = 5) -> dict[str, list[float]]:
     stream = "/".join(f"{s}@trade" for s in symbols)
     uri = f"wss://stream.binance.com:9443/stream?streams={stream}"
 
-    with SyncWebSocketClient(
+    with SyncWebSocket(
         uri,
         heartbeat=HeartbeatConfig(interval=20.0),
     ) as ws:
@@ -115,13 +115,13 @@ if __name__ == "__main__":
 
 ### Sync vs Async
 
-Use `SyncWebSocketClient` when:
+Use `SyncWebSocket` when:
 - Writing simple scripts
 - Working in Jupyter notebooks
 - Integrating with sync codebases
 - Prototyping quickly
 
-Use `WebSocketManager` (async) when:
+Use `WebSocket` (async) when:
 - Building production services
 - Handling multiple connections
 - Maximum performance needed
@@ -131,7 +131,7 @@ Use `WebSocketManager` (async) when:
 The `with` statement ensures proper cleanup:
 
 ```python
-with SyncWebSocketClient(uri) as ws:
+with SyncWebSocket(uri) as ws:
     message = ws.recv(timeout=5.0)
 # Connection closed automatically
 ```
@@ -151,9 +151,9 @@ except TimeoutError:
 
 ```python
 # In a notebook cell
-from wsfabric import SyncWebSocketClient
+from wsfabric import SyncWebSocket
 
-ws = SyncWebSocketClient("wss://stream.binance.com:9443/ws/btcusdt@ticker")
+ws = SyncWebSocket("wss://stream.binance.com:9443/ws/btcusdt@ticker")
 ws.connect()
 
 # Fetch a few messages
@@ -169,7 +169,7 @@ ws.close()
 ### Iterator Pattern
 
 ```python
-with SyncWebSocketClient(uri) as ws:
+with SyncWebSocket(uri) as ws:
     for msg in ws.iter_messages():
         print(msg)
         if should_stop(msg):
@@ -179,7 +179,7 @@ with SyncWebSocketClient(uri) as ws:
 ### Send and Receive
 
 ```python
-with SyncWebSocketClient("wss://api.example.com/ws") as ws:
+with SyncWebSocket("wss://api.example.com/ws") as ws:
     # Send request
     ws.send({"action": "get_price", "symbol": "BTCUSDT"})
 
@@ -191,7 +191,7 @@ with SyncWebSocketClient("wss://api.example.com/ws") as ws:
 ### With Reconnection
 
 ```python
-ws = SyncWebSocketClient(
+ws = SyncWebSocket(
     "wss://stream.example.com/ws",
     reconnect=True,
     heartbeat=HeartbeatConfig(interval=30.0),

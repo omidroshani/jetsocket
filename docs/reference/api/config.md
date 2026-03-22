@@ -150,36 +150,6 @@ replay = ReplayConfig(
 )
 ```
 
-## MultiplexConfig
-
-Controls multiplexing behavior.
-
-::: wsfabric.multiplex.MultiplexConfig
-    options:
-      show_source: true
-
-### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `channel_extractor` | Callable | required | Extract channel name from message |
-| `subscribe_message` | Callable | None | Generate subscribe message |
-| `unsubscribe_message` | Callable | None | Generate unsubscribe message |
-| `queue_size` | int | 1000 | Max messages per subscription |
-
-### Example
-
-```python
-from wsfabric import MultiplexConfig
-
-# Binance
-config = MultiplexConfig(
-    channel_extractor=lambda msg: msg.get("stream"),
-    subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
-    unsubscribe_message=lambda ch: {"method": "UNSUBSCRIBE", "params": [ch]},
-)
-```
-
 ## ConnectionPoolConfig
 
 Controls connection pool behavior.

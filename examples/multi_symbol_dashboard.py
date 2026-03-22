@@ -12,7 +12,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any
 
-from wsfabric import MultiplexConfig, MultiplexConnection
+from wsfabric import Multiplex
 
 
 @dataclass
@@ -82,20 +82,14 @@ async def main() -> None:
     symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
     dashboard = Dashboard(symbols)
 
-    config = MultiplexConfig(
-        channel_extractor=lambda msg: msg.get("stream"),
-        subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
-    )
-
     # Use dashboard-optimized settings
-    async with MultiplexConnection(
+    async with Multiplex(
         "wss://stream.binance.com:9443/ws",
-        config,
-        manager_kwargs={
-            "reconnect": True,
-            "heartbeat": {"interval": 30.0},
-            "buffer": {"capacity": 100, "overflow_policy": "drop_oldest"},
-        },
+        channel_key="stream",
+        subscribe_msg=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
+        reconnect=True,
+        heartbeat=30.0,
+        buffer_capacity=100,
     ) as mux:
         # Stream all symbols concurrently
         tasks = [stream_symbol(mux, s, dashboard) for s in symbols]

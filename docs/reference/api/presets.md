@@ -14,19 +14,16 @@ Pre-configured WebSocket profiles for common use cases.
 ## Usage
 
 ```python
-from wsfabric import Presets
+from wsfabric.presets import trading, llm_stream, dashboard
 
 # For crypto trading
-ws = Presets.trading("wss://stream.binance.com/ws")
+ws = trading("wss://stream.binance.com/ws")
 
 # For LLM streaming
-ws = Presets.llm_stream("wss://api.openai.com/v1/realtime")
+ws = llm_stream("wss://api.openai.com/v1/realtime")
 
 # For dashboards
-ws = Presets.dashboard("wss://dashboard.example.com/ws")
-
-# Basic configuration
-ws = Presets.minimal("wss://example.com/ws")
+ws = dashboard("wss://dashboard.example.com/ws")
 ```
 
 ## Preset Details
@@ -88,14 +85,16 @@ Basic configuration with sensible defaults:
 All presets accept `**overrides` to customize settings:
 
 ```python
+from wsfabric.presets import trading, llm_stream
+
 # Trading preset with custom buffer
-ws = Presets.trading(
+ws = trading(
     "wss://stream.binance.com/ws",
     buffer=BufferConfig(capacity=50000),  # Override buffer
 )
 
 # LLM preset with longer timeout
-ws = Presets.llm_stream(
+ws = llm_stream(
     "wss://api.openai.com/v1/realtime",
     heartbeat=HeartbeatConfig(interval=60.0, timeout=30.0),
 )

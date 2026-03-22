@@ -1,6 +1,6 @@
-# TypedWebSocket
+# WebSocket with `message_type`
 
-WebSocket client with Pydantic message validation.
+WebSocket client with Pydantic message validation via the `message_type` parameter.
 
 ::: wsfabric.typed.TypedWebSocket
     options:
@@ -12,7 +12,7 @@ WebSocket client with Pydantic message validation.
 
 ## Installation
 
-TypedWebSocket requires Pydantic:
+Typed messages require Pydantic:
 
 ```bash
 pip install wsfabric[pydantic]
@@ -24,14 +24,14 @@ pip install pydantic
 
 ```python
 from pydantic import BaseModel
-from wsfabric import TypedWebSocket
+from wsfabric import WebSocket
 
 class TradeMessage(BaseModel):
     symbol: str
     price: float
     quantity: float
 
-async with TypedWebSocket("wss://stream.example.com/ws", TradeMessage) as ws:
+async with WebSocket("wss://stream.example.com/ws", message_type=TradeMessage) as ws:
     async for trade in ws:  # trade: TradeMessage
         print(f"{trade.symbol}: ${trade.price:.2f}")
 ```
@@ -43,7 +43,7 @@ async with TypedWebSocket("wss://stream.example.com/ws", TradeMessage) as ws:
 Raises `ValidationError` on invalid messages:
 
 ```python
-ws = TypedWebSocket("wss://example.com/ws", TradeMessage, strict=True)
+ws = WebSocket("wss://example.com/ws", message_type=TradeMessage, strict=True)
 ```
 
 ### Non-Strict Mode
@@ -51,7 +51,7 @@ ws = TypedWebSocket("wss://example.com/ws", TradeMessage, strict=True)
 Skips invalid messages with a warning:
 
 ```python
-ws = TypedWebSocket("wss://example.com/ws", TradeMessage, strict=False)
+ws = WebSocket("wss://example.com/ws", message_type=TradeMessage, strict=False)
 
 # Check error count
 print(f"Validation errors: {ws.validation_errors}")
@@ -86,7 +86,7 @@ class BinanceTrade(BaseModel):
 
 ## Type Checking Benefits
 
-With TypedWebSocket, your IDE provides:
+With `WebSocket(message_type=...)`, your IDE provides:
 
 - Autocomplete for message fields
 - Type error detection

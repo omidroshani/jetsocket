@@ -26,7 +26,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any
 
-from wsfabric import MultiplexConnection, MultiplexConfig, Presets
+from wsfabric import Multiplex
 
 
 @dataclass
@@ -94,20 +94,14 @@ async def main() -> None:
     symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
     dashboard = Dashboard(symbols)
 
-    config = MultiplexConfig(
-        channel_extractor=lambda msg: msg.get("stream"),
-        subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
-    )
-
-    # Use dashboard preset: relaxed reconnect, small buffer
-    async with MultiplexConnection(
+    # Use dashboard-optimized settings
+    async with Multiplex(
         "wss://stream.binance.com:9443/ws",
-        config,
-        manager_kwargs={
-            "reconnect": True,
-            "heartbeat": {"interval": 30.0},
-            "buffer": {"capacity": 100, "overflow_policy": "drop_oldest"},
-        },
+        channel_key="stream",
+        subscribe_msg=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
+        reconnect=True,
+        heartbeat=30.0,
+        buffer_capacity=100,
     ) as mux:
         # Stream all symbols concurrently
         tasks = [stream_symbol(mux, s, dashboard) for s in symbols]
@@ -125,12 +119,16 @@ if __name__ == "__main__":
 
 ### Dashboard Preset
 
-The dashboard preset is optimized for real-time displays:
+The dashboard-optimized settings keep a small buffer and drop stale data:
 
 ```python
-manager_kwargs={
-    "buffer": {"capacity": 100, "overflow_policy": "drop_oldest"},
-}
+async with Multiplex(
+    "wss://...",
+    channel_key="stream",
+    heartbeat=30.0,
+    buffer_capacity=100,
+) as mux:
+    ...
 ```
 
 - Small buffer (latest data is most important)
@@ -173,8 +171,14 @@ dashboard.update(
 
 ```python
 # Stream from multiple exchanges
-async with MultiplexConnection("wss://stream.binance.com/ws", config) as binance:
-    async with MultiplexConnection("wss://stream.bybit.com/ws", bybit_config) as bybit:
+async with Multiplex(
+    "wss://stream.binance.com/ws",
+    channel_key="stream",
+) as binance:
+    async with Multiplex(
+        "wss://stream.bybit.com/ws",
+        channel_extractor=lambda msg: msg.get("topic"),
+    ) as bybit:
         btc_binance = await binance.subscribe("btcusdt@ticker")
         btc_bybit = await bybit.subscribe("ticker.BTCUSDT")
 ```
@@ -184,15 +188,15 @@ async with MultiplexConnection("wss://stream.binance.com/ws", config) as binance
 For a web-based dashboard, you could integrate with a framework:
 
 ```python
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket as FastAPIWebSocket
 
 app = FastAPI()
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: FastAPIWebSocket):
     await websocket.accept()
 
-    async with MultiplexConnection(...) as mux:
+    async with Multiplex(...) as mux:
         sub = await mux.subscribe("btcusdt@ticker")
         async for msg in sub:
             await websocket.send_json(msg)

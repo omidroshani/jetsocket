@@ -4,20 +4,20 @@ WSFabric defines a hierarchy of exceptions for precise error handling.
 
 ## Exception Hierarchy
 
-```
-WSFabricError (base)
-├── ConnectionError
-│   ├── ConnectionClosedError
-│   ├── ConnectionTimeoutError
-│   └── ConnectionRefusedError
-├── ProtocolError
-│   ├── InvalidFrameError
-│   └── InvalidMessageError
-├── BufferError
-│   └── BufferOverflowError
-├── PoolError
-│   └── PoolExhaustedError
-└── InvalidStateError
+```mermaid
+graph TD
+    A[WSFabricError] --> B[ConnectionError]
+    A --> C[ProtocolError]
+    A --> D[BufferError]
+    A --> E[PoolError]
+    A --> F[InvalidStateError]
+    B --> B1[ConnectionClosedError]
+    B --> B2[ConnectionTimeoutError]
+    B --> B3[ConnectionRefusedError]
+    C --> C1[InvalidFrameError]
+    C --> C2[InvalidMessageError]
+    D --> D1[BufferOverflowError]
+    E --> E1[PoolExhaustedError]
 ```
 
 ## Base Exception
@@ -32,7 +32,7 @@ All WSFabric exceptions inherit from `WSFabricError`:
 from wsfabric import WSFabricError
 
 try:
-    async with WebSocketManager(...) as ws:
+    async with WebSocket(...) as ws:
         ...
 except WSFabricError as e:
     print(f"WSFabric error: {e}")
@@ -117,7 +117,7 @@ Raised when the buffer is full and overflow policy is "error":
 ```python
 from wsfabric import BufferOverflowError, BufferConfig
 
-ws = WebSocketManager(
+ws = WebSocket(
     "wss://example.com/ws",
     buffer=BufferConfig(capacity=100, overflow_policy="error"),
 )
@@ -179,7 +179,7 @@ except ConnectionRefusedError:
 
 ```python
 try:
-    async with WebSocketManager(...) as ws:
+    async with WebSocket(...) as ws:
         async for msg in ws:
             process(msg)
 except WSFabricError as e:

@@ -26,13 +26,13 @@ import asyncio
 import json
 import sys
 
-from wsfabric import Presets
+from wsfabric.presets import llm_stream
 
 
 async def stream_completion(prompt: str) -> None:
     """Stream a completion from the LLM API."""
     # Use LLM preset: quick retry, large messages, no compression
-    ws = Presets.llm_stream("wss://api.example.com/v1/stream")
+    ws = llm_stream("wss://api.example.com/v1/stream")
 
     @ws.on("connected")
     async def on_connected(event):
@@ -88,7 +88,9 @@ if __name__ == "__main__":
 The `llm_stream` preset is optimized for LLM APIs:
 
 ```python
-ws = Presets.llm_stream("wss://api.example.com/v1/stream")
+from wsfabric.presets import llm_stream
+
+ws = llm_stream("wss://api.example.com/v1/stream")
 ```
 
 Settings:
@@ -125,7 +127,9 @@ async def on_message(event):
 ### With Authentication
 
 ```python
-ws = Presets.llm_stream(
+from wsfabric.presets import llm_stream
+
+ws = llm_stream(
     "wss://api.example.com/v1/stream",
     headers={"Authorization": f"Bearer {API_KEY}"},
 )
@@ -134,7 +138,9 @@ ws = Presets.llm_stream(
 ### Custom Timeout
 
 ```python
-ws = Presets.llm_stream(
+from wsfabric.presets import llm_stream
+
+ws = llm_stream(
     "wss://api.example.com/v1/stream",
     heartbeat=HeartbeatConfig(interval=60.0, timeout=30.0),
 )
