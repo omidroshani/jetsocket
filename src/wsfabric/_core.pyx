@@ -280,33 +280,75 @@ class FrameParser:
         return frame, total_size
 
     def _encode_frame(self, opcode, payload, bint mask, bint fin, bint rsv1=False):
-        """Encode a frame for sending."""
+        """Encode a frame directly into a single bytearray (zero-copy)."""
         cdef Py_ssize_t payload_len = len(payload)
-        cdef list parts = []
+        cdef Py_ssize_t header_len, mask_size, total_size, pos
+        cdef unsigned char first_byte, mask_bit
+        cdef unsigned char mask_key[4]
+        cdef const unsigned char *payload_ptr
 
-        cdef unsigned char first_byte = (0x80 if fin else 0x00) | int(opcode)
+        # Calculate sizes
+        mask_size = 4 if mask else 0
+        if payload_len <= 125:
+            header_len = 2 + mask_size
+        elif payload_len <= 65535:
+            header_len = 4 + mask_size
+        else:
+            header_len = 10 + mask_size
+        total_size = header_len + payload_len
+
+        # Single allocation
+        cdef bytearray frame = bytearray(total_size)
+        cdef unsigned char *buf = <unsigned char*>frame
+        pos = 0
+
+        # First byte
+        first_byte = (0x80 if fin else 0x00) | int(opcode)
         if rsv1:
             first_byte |= 0x40
-        parts.append(bytes([first_byte]))
+        buf[pos] = first_byte
+        pos += 1
 
-        cdef unsigned char mask_bit = 0x80 if mask else 0x00
+        # Second byte + extended length
+        mask_bit = 0x80 if mask else 0x00
         if payload_len <= 125:
-            parts.append(bytes([mask_bit | payload_len]))
+            buf[pos] = mask_bit | <unsigned char>payload_len
+            pos += 1
         elif payload_len <= 65535:
-            parts.append(bytes([mask_bit | 126]))
-            parts.append(struct.pack(">H", payload_len))
+            buf[pos] = mask_bit | 126
+            pos += 1
+            buf[pos] = (payload_len >> 8) & 0xFF
+            buf[pos + 1] = payload_len & 0xFF
+            pos += 2
         else:
-            parts.append(bytes([mask_bit | 127]))
-            parts.append(struct.pack(">Q", payload_len))
+            buf[pos] = mask_bit | 127
+            pos += 1
+            # Write 8-byte big-endian length
+            for i in range(7, -1, -1):
+                buf[pos + 7 - i] = (payload_len >> (i * 8)) & 0xFF
+            pos += 8
 
+        # Mask key + payload
         if mask:
-            mask_key = os.urandom(4)
-            parts.append(mask_key)
-            parts.append(apply_mask(payload, mask_key))
+            _mask_key = os.urandom(4)
+            mask_key[0] = _mask_key[0]
+            mask_key[1] = _mask_key[1]
+            mask_key[2] = _mask_key[2]
+            mask_key[3] = _mask_key[3]
+            buf[pos] = mask_key[0]
+            buf[pos + 1] = mask_key[1]
+            buf[pos + 2] = mask_key[2]
+            buf[pos + 3] = mask_key[3]
+            pos += 4
+            # Copy payload
+            payload_ptr = <const unsigned char*>payload
+            memcpy(buf + pos, payload_ptr, payload_len)
+            # Mask in-place
+            _apply_mask_c(buf + pos, payload_len, mask_key)
         else:
-            parts.append(payload)
+            memcpy(buf + pos, <const unsigned char*>payload, payload_len)
 
-        return b"".join(parts)
+        return bytes(frame)
 
 
 # ==========================================================================

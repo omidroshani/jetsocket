@@ -43,32 +43,47 @@ class _WSProtocol(asyncio.Protocol):
     """Low-level WebSocket protocol handler.
 
     Feeds incoming data to the frame parser and delivers parsed frames
-    to a queue. Handles backpressure via pause/resume callbacks.
+    via a fast list+Event pattern (faster than asyncio.Queue).
     """
 
-    def __init__(self, frame_queue: asyncio.Queue[Any]) -> None:
+    def __init__(self) -> None:
         self.transport: asyncio.Transport | None = None
-        self.frame_queue = frame_queue
         self.parser: FrameParser | None = None
         self.deflater: Deflater | None = None
         self.compression_threshold: int = 128
+
+        # Frame delivery: list + event (faster than asyncio.Queue)
+        self._frames: list[Any] = []
+        self._frame_ready = asyncio.Event()
 
         # Backpressure
         self._can_write = asyncio.Event()
         self._can_write.set()
 
-        # Handshake mode: accumulate bytes until handshake completes
+        # Handshake mode
         self._handshake_buffer = bytearray()
         self._handshake_future: asyncio.Future[bytes] | None = None
         self._handshake_done = False
+
+        # Connection state
+        self._connection_lost = False
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         """Called when connection is established."""
         self.transport = transport  # type: ignore[assignment]
 
+        # Set TCP_NODELAY for lower latency
+        sock = transport.get_extra_info("socket")
+        if sock is not None:
+            import socket as _socket  # noqa: PLC0415
+
+            try:
+                sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)
+            except OSError:
+                pass
+
     def data_received(self, data: bytes) -> None:
         """Called when data is received from the network."""
-        # During handshake, accumulate raw bytes
         if not self._handshake_done:
             self._handshake_buffer.extend(data)
             if b"\r\n\r\n" in self._handshake_buffer:
@@ -76,14 +91,12 @@ class _WSProtocol(asyncio.Protocol):
                     self._handshake_future.set_result(bytes(self._handshake_buffer))
             return
 
-        # After handshake, parse WebSocket frames
         if self.parser is None:
             return
 
         try:
             frames, _ = self.parser.feed(data)
         except ValueError:
-            # Protocol error — close
             if self.transport is not None:
                 self.transport.close()
             return
@@ -95,15 +108,13 @@ class _WSProtocol(asyncio.Protocol):
                 if self.parser is not None and self.transport is not None:
                     pong = self.parser.encode(0xA, frame.payload, True, True)
                     self.transport.write(pong)
-
             elif opcode == 0x8:  # CLOSE
-                self.frame_queue.put_nowait(frame)
-
+                self._frames.append(frame)
+                self._frame_ready.set()
             elif opcode == 0xA:  # PONG
-                self.frame_queue.put_nowait(frame)
-
-            else:  # DATA frames (TEXT, BINARY)
-                # Decompress if RSV1 set
+                self._frames.append(frame)
+                self._frame_ready.set()
+            else:  # DATA frames
                 if frame.rsv1 and self.deflater is not None:
                     decompressed = self.deflater.decompress(frame.payload)
                     frame = Frame(
@@ -111,11 +122,13 @@ class _WSProtocol(asyncio.Protocol):
                         payload=decompressed,
                         fin=frame.fin,
                     )
-                self.frame_queue.put_nowait(frame)
+                self._frames.append(frame)
+                self._frame_ready.set()
 
     def connection_lost(self, exc: Exception | None) -> None:
         """Called when connection is lost."""
-        self.frame_queue.put_nowait(_CONNECTION_LOST)
+        self._connection_lost = True
+        self._frame_ready.set()
         if self._handshake_future is not None and not self._handshake_future.done():
             if exc:
                 self._handshake_future.set_exception(exc)
@@ -157,7 +170,6 @@ class AsyncTransport(AbstractTransport):
         self._asyncio_transport: asyncio.Transport | None = None
         self._parser: FrameParser | None = None
         self._uri: WebSocketURI | None = None
-        self._frame_queue: asyncio.Queue[Any] = asyncio.Queue()
         self._close_code: int | None = None
         self._close_reason: str = ""
         self._cached_ssl_session: ssl.SSLSession | None = None
@@ -302,7 +314,6 @@ class AsyncTransport(AbstractTransport):
             raise ConnectionError(msg)
 
         loop = asyncio.get_event_loop()
-        self._frame_queue = asyncio.Queue()
 
         ssl_kwargs: dict[str, Any] = {}
         if ssl_context is not None:
@@ -312,7 +323,7 @@ class AsyncTransport(AbstractTransport):
         try:
             transport, protocol = await asyncio.wait_for(
                 loop.create_connection(
-                    lambda: _WSProtocol(self._frame_queue),
+                    _WSProtocol,
                     host=ip,
                     port=self._uri.port,
                     family=family,
@@ -478,35 +489,47 @@ class AsyncTransport(AbstractTransport):
         """Receive the next WebSocket frame.
 
         No locks. Frames arrive via the Protocol's data_received callback
-        and are queued. This just awaits the queue.
+        and are delivered via a fast list+Event pattern.
         """
-        if not self._connected:
+        if not self._connected or self._protocol is None:
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 
+        proto = self._protocol
+
         while True:
-            try:
-                if self._config.read_timeout:
-                    item = await asyncio.wait_for(
-                        self._frame_queue.get(),
-                        timeout=self._config.read_timeout,
-                    )
-                else:
-                    item = await self._frame_queue.get()
-            except asyncio.TimeoutError:
-                msg = "Read operation timed out"
-                raise TimeoutError(
-                    msg,
-                    timeout=self._config.read_timeout or 0,
-                    operation="recv",
-                ) from None
+            # Fast path: check if frames are already available
+            if proto._frames:
+                frame = proto._frames.pop(0)
+            else:
+                # Wait for frames
+                proto._frame_ready.clear()
+                try:
+                    if self._config.read_timeout:
+                        await asyncio.wait_for(
+                            proto._frame_ready.wait(),
+                            timeout=self._config.read_timeout,
+                        )
+                    else:
+                        await proto._frame_ready.wait()
+                except asyncio.TimeoutError:
+                    msg = "Read operation timed out"
+                    raise TimeoutError(
+                        msg,
+                        timeout=self._config.read_timeout or 0,
+                        operation="recv",
+                    ) from None
 
-            if item is _CONNECTION_LOST:
-                self._connected = False
-                msg = "Connection closed by remote"
-                raise ConnectionError(msg)
+                # Check connection lost
+                if proto._connection_lost and not proto._frames:
+                    self._connected = False
+                    msg = "Connection closed by remote"
+                    raise ConnectionError(msg)
 
-            frame = item
+                if not proto._frames:
+                    continue
+
+                frame = proto._frames.pop(0)
 
             # Handle close frame
             if int(frame.opcode) == 0x8:
@@ -569,14 +592,18 @@ class AsyncTransport(AbstractTransport):
 
     async def _wait_for_close(self) -> None:
         """Wait for the server's close frame."""
+        if self._protocol is None:
+            return
+        proto = self._protocol
         while self._connected:
             try:
-                item = await asyncio.wait_for(
-                    self._frame_queue.get(), timeout=1.0
-                )
-                if item is _CONNECTION_LOST:
-                    return
-                if int(item.opcode) == 0x8:
+                proto._frame_ready.clear()
+                await asyncio.wait_for(proto._frame_ready.wait(), timeout=1.0)
+                while proto._frames:
+                    frame = proto._frames.pop(0)
+                    if int(frame.opcode) == 0x8:
+                        return
+                if proto._connection_lost:
                     return
             except (asyncio.TimeoutError, Exception):
                 return
