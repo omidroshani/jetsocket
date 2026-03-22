@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Production-grade, resilient WebSocket library for Python with Rust-powered performance"
 readme = "README.md"
 license = { text = "MIT" }
-authors = [{ name = "Omid", email = "omid@example.com" }]
+authors = [{ name = "Omid Roshani", email = "hello@omid.ai" }]
 requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -37,10 +37,10 @@ truststore = ["truststore>=0.8"]
 all = ["pydantic>=2.0", "orjson>=3.9", "uvloop>=0.19; sys_platform != 'win32'", "truststore>=0.8"]
 
 [project.urls]
-Homepage = "https://github.com/omid/wsfabric"
-Documentation = "https://github.com/omid/wsfabric#readme"
-Repository = "https://github.com/omid/wsfabric"
-Issues = "https://github.com/omid/wsfabric/issues"
+Homepage = "https://github.com/omidroshani/wsfabric"
+Documentation = "https://github.com/omidroshani/wsfabric#readme"
+Repository = "https://github.com/omidroshani/wsfabric"
+Issues = "https://github.com/omidroshani/wsfabric/issues"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
