@@ -52,9 +52,9 @@ class _WSProtocol(asyncio.Protocol):
         self.deflater: Deflater | None = None
         self.compression_threshold: int = 128
 
-        # Frame delivery: list + future (minimal await overhead)
+        # Frame delivery: list + event (faster than asyncio.Queue)
         self._frames: list[Any] = []
-        self._waiter: asyncio.Future[None] | None = None
+        self._frame_ready = asyncio.Event()
 
         # Backpressure
         self._can_write = asyncio.Event()
@@ -110,10 +110,10 @@ class _WSProtocol(asyncio.Protocol):
                     self.transport.write(pong)
             elif opcode == 0x8:  # CLOSE
                 self._frames.append(frame)
-                self._wake_waiter()
+                self._frame_ready.set()
             elif opcode == 0xA:  # PONG
                 self._frames.append(frame)
-                self._wake_waiter()
+                self._frame_ready.set()
             else:  # DATA frames
                 if frame.rsv1 and self.deflater is not None:
                     decompressed = self.deflater.decompress(frame.payload)
@@ -123,17 +123,12 @@ class _WSProtocol(asyncio.Protocol):
                         fin=frame.fin,
                     )
                 self._frames.append(frame)
-                self._wake_waiter()
-
-    def _wake_waiter(self) -> None:
-        """Wake the recv() waiter if one exists."""
-        if self._waiter is not None and not self._waiter.done():
-            self._waiter.set_result(None)
+                self._frame_ready.set()
 
     def connection_lost(self, exc: Exception | None) -> None:
         """Called when connection is lost."""
         self._connection_lost = True
-        self._wake_waiter()
+        self._frame_ready.set()
         if self._handshake_future is not None and not self._handshake_future.done():
             if exc:
                 self._handshake_future.set_exception(exc)
@@ -507,27 +502,23 @@ class AsyncTransport(AbstractTransport):
             if proto._frames:
                 frame = proto._frames.pop(0)
             else:
-                # Create a Future for this recv — resolved by data_received
-                waiter = asyncio.get_event_loop().create_future()
-                proto._waiter = waiter
+                # Wait for frames
+                proto._frame_ready.clear()
                 try:
                     if self._config.read_timeout:
                         await asyncio.wait_for(
-                            waiter,
+                            proto._frame_ready.wait(),
                             timeout=self._config.read_timeout,
                         )
                     else:
-                        await waiter
+                        await proto._frame_ready.wait()
                 except asyncio.TimeoutError:
-                    proto._waiter = None
                     msg = "Read operation timed out"
                     raise TimeoutError(
                         msg,
                         timeout=self._config.read_timeout or 0,
                         operation="recv",
                     ) from None
-                finally:
-                    proto._waiter = None
 
                 # Check connection lost
                 if proto._connection_lost and not proto._frames:
@@ -606,10 +597,8 @@ class AsyncTransport(AbstractTransport):
         proto = self._protocol
         while self._connected:
             try:
-                waiter = asyncio.get_event_loop().create_future()
-                proto._waiter = waiter
-                await asyncio.wait_for(waiter, timeout=1.0)
-                proto._waiter = None
+                proto._frame_ready.clear()
+                await asyncio.wait_for(proto._frame_ready.wait(), timeout=1.0)
                 while proto._frames:
                     frame = proto._frames.pop(0)
                     if int(frame.opcode) == 0x8:
@@ -617,7 +606,6 @@ class AsyncTransport(AbstractTransport):
                 if proto._connection_lost:
                     return
             except (asyncio.TimeoutError, Exception):
-                proto._waiter = None
                 return
 
     async def _close_transport(self) -> None:
