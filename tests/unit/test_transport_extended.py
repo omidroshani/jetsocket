@@ -71,11 +71,11 @@ class TestAsyncTransportSendErrors:
         with pytest.raises((WsConnectionError, ConnectionError)):
             await t.recv()
 
-    async def test_send_raw_when_not_connected_raises(self) -> None:
-        """Test _send_raw raises when not connected."""
+    async def test_send_binary_when_not_connected_raises(self) -> None:
+        """Test send binary raises when not connected."""
         t = AsyncTransport()
         with pytest.raises((WsConnectionError, ConnectionError)):
-            await t._send_raw(b"test")
+            await t.send(b"test", binary=True)
 
 
 class TestSyncTransportSendErrors:
@@ -124,17 +124,16 @@ class TestAsyncTransportClose:
     async def test_close_transport_clears_state(self) -> None:
         """Test _close_transport clears all internal state."""
         t = AsyncTransport()
-        t._writer = MagicMock()
-        t._writer.close = MagicMock()
-        t._writer.wait_closed = AsyncMock()
-        t._reader = MagicMock()
+        t._asyncio_transport = MagicMock()
+        t._asyncio_transport.close = MagicMock()
+        t._protocol = MagicMock()
         t._parser = MagicMock()
         t._deflater = MagicMock()
 
         await t._close_transport()
 
-        assert t._writer is None
-        assert t._reader is None
+        assert t._asyncio_transport is None
+        assert t._protocol is None
         assert t._parser is None
         assert t._deflater is None
 
@@ -211,21 +210,11 @@ class TestAsyncTransportHandshakeErrors:
         with pytest.raises((WsConnectionError, ConnectionError)):
             await t._perform_handshake()
 
-    async def test_handshake_empty_response_raises(self) -> None:
-        """Test handshake with empty response raises."""
+    async def test_handshake_not_initialized_protocol_raises(self) -> None:
+        """Test handshake when protocol is not initialized raises."""
         t = AsyncTransport()
         t._uri = MagicMock()
-        t._uri.host_header = "example.com"
-        t._uri.resource_name = "/ws"
-        t._uri.origin = "https://example.com"
-        t._writer = MagicMock()
-        t._writer.write = MagicMock()
-        t._writer.drain = AsyncMock()
-        t._reader = MagicMock()
-        t._reader.read = AsyncMock(return_value=b"")
-        t._config = BaseTransportConfig(connect_timeout=5.0)
-
-        from wsfabric.exceptions import HandshakeError
-
-        with pytest.raises(HandshakeError, match=r"[Cc]losed|[Hh]andshake"):
+        t._protocol = None
+        t._asyncio_transport = None
+        with pytest.raises((WsConnectionError, ConnectionError)):
             await t._perform_handshake()

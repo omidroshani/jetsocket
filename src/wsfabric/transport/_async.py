@@ -1,7 +1,8 @@
-"""Async transport implementation using asyncio.
+"""Async transport implementation using asyncio Protocol.
 
-This module provides an asyncio-based WebSocket transport that uses
-the native event loop for non-blocking I/O.
+This module provides a high-performance asyncio-based WebSocket transport
+using the raw Protocol interface instead of StreamReader/StreamWriter for
+minimal overhead on the send/recv hot path.
 """
 
 from __future__ import annotations
@@ -10,7 +11,7 @@ import asyncio
 import contextlib
 import socket
 import ssl
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from wsfabric.exceptions import (
     ConnectionError,
@@ -43,12 +44,112 @@ except ImportError:
         parse_deflate_params,
     )
 
+# Sentinel for connection lost
+_CONNECTION_LOST = object()
+
+
+class _WSProtocol(asyncio.Protocol):
+    """Low-level WebSocket protocol handler.
+
+    Feeds incoming data to the frame parser and delivers parsed frames
+    to a queue. Handles backpressure via pause/resume callbacks.
+    """
+
+    def __init__(self, frame_queue: asyncio.Queue[Any]) -> None:
+        self.transport: asyncio.Transport | None = None
+        self.frame_queue = frame_queue
+        self.parser: FrameParser | None = None
+        self.deflater: Deflater | None = None
+        self.compression_threshold: int = 128
+
+        # Backpressure
+        self._can_write = asyncio.Event()
+        self._can_write.set()
+
+        # Handshake mode: accumulate bytes until handshake completes
+        self._handshake_buffer = bytearray()
+        self._handshake_future: asyncio.Future[bytes] | None = None
+        self._handshake_done = False
+
+    def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        """Called when connection is established."""
+        self.transport = transport  # type: ignore[assignment]
+
+    def data_received(self, data: bytes) -> None:
+        """Called when data is received from the network."""
+        # During handshake, accumulate raw bytes
+        if not self._handshake_done:
+            self._handshake_buffer.extend(data)
+            if b"\r\n\r\n" in self._handshake_buffer:
+                if self._handshake_future is not None and not self._handshake_future.done():
+                    self._handshake_future.set_result(bytes(self._handshake_buffer))
+            return
+
+        # After handshake, parse WebSocket frames
+        if self.parser is None:
+            return
+
+        try:
+            frames, _ = self.parser.feed(data)
+        except ValueError:
+            # Protocol error — close
+            if self.transport is not None:
+                self.transport.close()
+            return
+
+        for frame in frames:
+            opcode = int(frame.opcode)
+
+            if opcode == 0x9:  # PING — auto-respond with PONG
+                if self.parser is not None and self.transport is not None:
+                    pong = self.parser.encode(0xA, frame.payload, True, True)
+                    self.transport.write(pong)
+
+            elif opcode == 0x8:  # CLOSE
+                self.frame_queue.put_nowait(frame)
+
+            elif opcode == 0xA:  # PONG
+                self.frame_queue.put_nowait(frame)
+
+            else:  # DATA frames (TEXT, BINARY)
+                # Decompress if RSV1 set
+                if frame.rsv1 and self.deflater is not None:
+                    decompressed = self.deflater.decompress(frame.payload)
+                    frame = Frame(
+                        opcode=Opcode(int(frame.opcode)),
+                        payload=decompressed,
+                        fin=frame.fin,
+                    )
+                self.frame_queue.put_nowait(frame)
+
+    def connection_lost(self, exc: Exception | None) -> None:
+        """Called when connection is lost."""
+        self.frame_queue.put_nowait(_CONNECTION_LOST)
+        if self._handshake_future is not None and not self._handshake_future.done():
+            if exc:
+                self._handshake_future.set_exception(exc)
+            else:
+                self._handshake_future.set_exception(
+                    ConnectionError("Connection closed during handshake")
+                )
+
+    def pause_writing(self) -> None:
+        """Called when the transport's write buffer is full."""
+        self._can_write.clear()
+
+    def resume_writing(self) -> None:
+        """Called when the transport's write buffer drains below threshold."""
+        self._can_write.set()
+
 
 class AsyncTransport(AbstractTransport):
-    """Async WebSocket transport using asyncio.
+    """Async WebSocket transport using asyncio Protocol.
 
-    This transport uses asyncio streams for non-blocking I/O and integrates
-    with the Rust frame parser for high-performance frame handling.
+    Uses the raw asyncio Protocol interface for maximum performance:
+    - No StreamReader/StreamWriter overhead
+    - No drain() coroutine on sends (fire-and-forget with backpressure)
+    - No asyncio.Lock on the hot path
+    - Frame parsing happens in the data_received callback
 
     Example:
         >>> transport = AsyncTransport()
@@ -59,24 +160,16 @@ class AsyncTransport(AbstractTransport):
     """
 
     def __init__(self, config: BaseTransportConfig | None = None) -> None:
-        """Initialize the async transport.
-
-        Args:
-            config: Transport configuration. Uses defaults if not provided.
-        """
+        """Initialize the async transport."""
         super().__init__(config)
-        self._reader: asyncio.StreamReader | None = None
-        self._writer: asyncio.StreamWriter | None = None
+        self._protocol: _WSProtocol | None = None
+        self._asyncio_transport: asyncio.Transport | None = None
         self._parser: FrameParser | None = None
         self._uri: WebSocketURI | None = None
-        self._read_lock = asyncio.Lock()
-        self._write_lock = asyncio.Lock()
-        self._pending_frames: list[Frame] = []
+        self._frame_queue: asyncio.Queue[Any] = asyncio.Queue()
         self._close_code: int | None = None
         self._close_reason: str = ""
-        # TLS session caching for faster reconnects
         self._cached_ssl_session: ssl.SSLSession | None = None
-        # Compression
         self._deflater: Deflater | None = None
 
     @property
@@ -95,29 +188,14 @@ class AsyncTransport(AbstractTransport):
         return self._close_reason
 
     async def _resolve_dns(self, host: str, port: int) -> list[ResolvedAddress]:
-        """Resolve DNS fresh on each call (no caching).
-
-        This ensures we get the latest DNS records on each reconnect,
-        which is important for load balancing and failover scenarios.
-
-        Args:
-            host: The hostname to resolve.
-            port: The port number.
-
-        Returns:
-            List of (address_family, ip_address) tuples.
-
-        Raises:
-            ConnectionError: If DNS resolution fails.
-        """
+        """Resolve DNS fresh on each call (no caching)."""
         loop = asyncio.get_event_loop()
 
         try:
             infos = await loop.run_in_executor(
                 None,
                 lambda: socket.getaddrinfo(
-                    host,
-                    port,
+                    host, port,
                     family=socket.AF_UNSPEC,
                     type=socket.SOCK_STREAM,
                 ),
@@ -126,13 +204,11 @@ class AsyncTransport(AbstractTransport):
             msg = f"DNS resolution failed for {host}: {e}"
             raise ConnectionError(msg) from e
 
-        # Deduplicate and extract (family, address) pairs
         seen: set[tuple[socket.AddressFamily, str]] = set()
         addresses: list[ResolvedAddress] = []
 
         for family, type_, proto, canonname, sockaddr in infos:
-            # sockaddr is (ip, port) for IPv4, (ip, port, flowinfo, scope_id) for IPv6
-            ip = str(sockaddr[0])  # Ensure it's a string
+            ip = str(sockaddr[0])
             key = (family, ip)
             if key not in seen:
                 seen.add(key)
@@ -145,35 +221,19 @@ class AsyncTransport(AbstractTransport):
         return addresses
 
     async def connect(self, uri: str | WebSocketURI) -> None:
-        """Connect to a WebSocket server.
-
-        DNS is resolved fresh on each connection attempt to ensure we get
-        the latest records. For TLS connections, cached SSL sessions are
-        reused when available for faster handshakes.
-
-        Args:
-            uri: The WebSocket URI to connect to.
-
-        Raises:
-            ConnectionError: If the connection cannot be established.
-            HandshakeError: If the WebSocket handshake fails.
-            TimeoutError: If the connection times out.
-        """
+        """Connect to a WebSocket server."""
         if self._connected:
             msg = "Transport is already connected"
             raise ConnectionError(msg)
 
-        # Parse URI if string
         if isinstance(uri, str):
             self._uri = parse_uri(uri)
         else:
             self._uri = uri
 
-        # Create SSL context if needed
         ssl_context: ssl.SSLContext | None = None
         if self._uri.is_secure:
             ssl_context = self._config.ssl_context or create_default_ssl_context()
-            # Enable TLS session caching
             ssl_context.check_hostname = True
             ssl_context.verify_mode = ssl.CERT_REQUIRED
 
@@ -181,7 +241,7 @@ class AsyncTransport(AbstractTransport):
         try:
             addresses = await asyncio.wait_for(
                 self._resolve_dns(self._uri.host, self._uri.port),
-                timeout=self._config.connect_timeout / 2,  # Half timeout for DNS
+                timeout=self._config.connect_timeout / 2,
             )
         except asyncio.TimeoutError:
             msg = f"DNS resolution for {self._uri.host} timed out"
@@ -189,7 +249,7 @@ class AsyncTransport(AbstractTransport):
                 msg, timeout=self._config.connect_timeout, operation="dns"
             ) from None
 
-        # Try each resolved address until one works
+        # Try each resolved address
         last_error: Exception | None = None
         for family, ip in addresses:
             try:
@@ -199,7 +259,6 @@ class AsyncTransport(AbstractTransport):
                 last_error = e
                 continue
         else:
-            # All addresses failed
             msg = f"Failed to connect to {self._uri.host}:{self._uri.port}"
             if last_error:
                 msg = f"{msg}: {last_error}"
@@ -212,8 +271,8 @@ class AsyncTransport(AbstractTransport):
             await self._close_transport()
             raise
 
-        # Cache SSL session for faster reconnects
-        if ssl_context is not None and self._writer is not None:
+        # Cache SSL session
+        if ssl_context is not None and self._asyncio_transport is not None:
             self._cache_ssl_session()
 
         # Initialize frame parser
@@ -221,6 +280,23 @@ class AsyncTransport(AbstractTransport):
             self._config.max_frame_size,
             self._config.max_message_size,
         )
+
+        # Configure protocol for frame parsing mode
+        self._protocol.parser = self._parser  # type: ignore[union-attr]
+        self._protocol.deflater = self._deflater  # type: ignore[union-attr]
+        self._protocol.compression_threshold = self._config.compression_threshold  # type: ignore[union-attr]
+        self._protocol._handshake_done = True  # type: ignore[union-attr]
+
+        # Drain any leftover data from handshake buffer
+        if self._protocol is not None:
+            leftover = self._protocol._handshake_buffer
+            # Find data after the \r\n\r\n
+            idx = leftover.find(b"\r\n\r\n")
+            if idx >= 0:
+                remaining = bytes(leftover[idx + 4 :])
+                if remaining:
+                    self._protocol.data_received(remaining)
+
         self._connected = True
 
     async def _connect_to_address(
@@ -229,37 +305,27 @@ class AsyncTransport(AbstractTransport):
         family: socket.AddressFamily,
         ssl_context: ssl.SSLContext | None,
     ) -> None:
-        """Connect to a specific IP address.
-
-        Args:
-            ip: The IP address to connect to.
-            family: The address family (AF_INET or AF_INET6).
-            ssl_context: Optional SSL context for TLS connections.
-
-        Raises:
-            TimeoutError: If the connection times out.
-            OSError: If the connection fails.
-        """
+        """Connect to a specific IP address using Protocol."""
         if self._uri is None:
             msg = "URI not set"
             raise ConnectionError(msg)
 
-        # Build SSL kwargs if needed
-        ssl_kwargs: dict[str, ssl.SSLContext | str | ssl.SSLSession | None] = {}
+        loop = asyncio.get_event_loop()
+        self._frame_queue = asyncio.Queue()
+
+        ssl_kwargs: dict[str, Any] = {}
         if ssl_context is not None:
             ssl_kwargs["ssl"] = ssl_context
             ssl_kwargs["server_hostname"] = self._uri.host
-            # Reuse cached session if available
-            if self._cached_ssl_session is not None:
-                ssl_kwargs["ssl_session"] = self._cached_ssl_session
 
         try:
-            self._reader, self._writer = await asyncio.wait_for(
-                asyncio.open_connection(
+            transport, protocol = await asyncio.wait_for(
+                loop.create_connection(
+                    lambda: _WSProtocol(self._frame_queue),
                     host=ip,
                     port=self._uri.port,
                     family=family,
-                    **ssl_kwargs,  # type: ignore[arg-type]
+                    **ssl_kwargs,
                 ),
                 timeout=self._config.connect_timeout,
             )
@@ -269,25 +335,21 @@ class AsyncTransport(AbstractTransport):
                 msg, timeout=self._config.connect_timeout, operation="connect"
             ) from None
 
-    def _cache_ssl_session(self) -> None:
-        """Cache the current SSL session for reuse on reconnect.
+        self._asyncio_transport = transport
+        self._protocol = protocol
 
-        This allows TLS session resumption, which significantly speeds up
-        reconnections by avoiding a full handshake.
-        """
-        if self._writer is None:
+    def _cache_ssl_session(self) -> None:
+        """Cache the current SSL session for reuse on reconnect."""
+        if self._asyncio_transport is None:
             return
 
-        transport = self._writer.transport
-        ssl_object = transport.get_extra_info("ssl_object")
-
+        ssl_object = self._asyncio_transport.get_extra_info("ssl_object")
         if ssl_object is not None:
             try:
                 session = ssl_object.session
                 if session is not None:
                     self._cached_ssl_session = session
             except AttributeError:
-                # Older Python versions may not support session access
                 pass
 
     @property
@@ -301,7 +363,7 @@ class AsyncTransport(AbstractTransport):
 
     async def _perform_handshake(self) -> None:
         """Perform the WebSocket opening handshake."""
-        if self._uri is None or self._writer is None or self._reader is None:
+        if self._uri is None or self._protocol is None or self._asyncio_transport is None:
             msg = "Transport not initialized"
             raise ConnectionError(msg)
 
@@ -310,10 +372,8 @@ class AsyncTransport(AbstractTransport):
         if self._config.compression:
             extensions.append("permessage-deflate")
 
-        # Build extra headers as tuples
         extra_headers = list(self._config.extra_headers.items())
 
-        # Create handshake
         handshake = Handshake(
             self._uri.host_header,
             self._uri.resource_name,
@@ -323,24 +383,24 @@ class AsyncTransport(AbstractTransport):
             extra_headers=extra_headers or None,
         )
 
-        # Send request
+        # Send handshake request (fire-and-forget, no drain)
         request = handshake.build_request()
-        self._writer.write(request)
-        await self._writer.drain()
+        self._asyncio_transport.write(request)
 
-        # Read response (read until we get the double CRLF)
-        response_data = b""
-        while b"\r\n\r\n" not in response_data:
-            chunk = await asyncio.wait_for(
-                self._reader.read(4096),
+        # Set up future for handshake response
+        loop = asyncio.get_event_loop()
+        self._protocol._handshake_future = loop.create_future()
+
+        # Wait for handshake response
+        try:
+            response_data = await asyncio.wait_for(
+                self._protocol._handshake_future,
                 timeout=self._config.connect_timeout,
             )
-            if not chunk:
-                msg = "Connection closed during handshake"
-                raise HandshakeError(msg)
-            response_data += chunk
+        except asyncio.TimeoutError:
+            msg = "Handshake timed out"
+            raise HandshakeError(msg) from None
 
-        # Parse and validate response
         try:
             result = handshake.parse_response(response_data)
         except ValueError as e:
@@ -349,7 +409,7 @@ class AsyncTransport(AbstractTransport):
         self._subprotocol = result.subprotocol
         self._extensions = result.extensions
 
-        # Initialize compression if server accepted permessage-deflate
+        # Initialize compression
         if self._config.compression:
             ext_header = ""
             if hasattr(result, "headers") and isinstance(result.headers, dict):
@@ -366,30 +426,22 @@ class AsyncTransport(AbstractTransport):
     async def send(self, data: bytes | str, *, binary: bool | None = None) -> None:
         """Send data over the WebSocket connection.
 
-        Args:
-            data: The data to send. Can be bytes or string.
-            binary: If True, send as binary frame. If False, send as text.
-                   If None, infer from data type.
-
-        Raises:
-            ConnectionError: If not connected.
-            ProtocolError: If there's an error sending the frame.
+        No locks, no drain(). Writes directly to the transport.
+        Backpressure is handled via pause_writing/resume_writing callbacks.
         """
-        if not self._connected or self._parser is None:
+        if not self._connected or self._parser is None or self._asyncio_transport is None:
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 
-        # Determine opcode
         if binary is None:
             binary = isinstance(data, bytes)
 
         opcode = Opcode.BINARY if binary else Opcode.TEXT
 
-        # Convert string to bytes
         if isinstance(data, str):
             data = data.encode("utf-8")
 
-        # Compress if deflater is active and payload exceeds threshold
+        # Compress if applicable
         rsv1 = False
         if (
             self._deflater is not None
@@ -398,20 +450,17 @@ class AsyncTransport(AbstractTransport):
             data = self._deflater.compress(data)
             rsv1 = True
 
-        # Encode and send frame (pass opcode as int for Rust compatibility)
         frame_data = self._parser.encode(int(opcode), data, True, True, rsv1=rsv1)
-        await self._send_raw(frame_data)
+
+        # Wait for backpressure to clear (only blocks if transport is paused)
+        if self._protocol is not None and not self._protocol._can_write.is_set():
+            await self._protocol._can_write.wait()
+
+        self._asyncio_transport.write(frame_data)
 
     async def send_frame(self, frame: Frame) -> None:
-        """Send a pre-built frame over the connection.
-
-        Args:
-            frame: The frame to send.
-
-        Raises:
-            ConnectionError: If not connected.
-        """
-        if not self._connected or self._parser is None:
+        """Send a pre-built frame."""
+        if not self._connected or self._parser is None or self._asyncio_transport is None:
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 
@@ -428,168 +477,86 @@ class AsyncTransport(AbstractTransport):
         frame_data = self._parser.encode(
             int(frame.opcode), payload, True, frame.fin, rsv1=rsv1
         )
-        await self._send_raw(frame_data)
 
-    async def _send_raw(self, data: bytes) -> None:
-        """Send raw bytes over the connection.
+        if self._protocol is not None and not self._protocol._can_write.is_set():
+            await self._protocol._can_write.wait()
 
-        Args:
-            data: The raw bytes to send.
-        """
-        if self._writer is None:
-            msg = "Transport is not connected"
-            raise ConnectionError(msg)
-
-        async with self._write_lock:
-            self._writer.write(data)
-            if self._config.write_timeout:
-                await asyncio.wait_for(
-                    self._writer.drain(),
-                    timeout=self._config.write_timeout,
-                )
-            else:
-                await self._writer.drain()
+        self._asyncio_transport.write(frame_data)
 
     async def recv(self) -> Frame:
         """Receive the next WebSocket frame.
 
-        Returns:
-            The received frame.
-
-        Raises:
-            ConnectionError: If not connected or connection is lost.
-            ProtocolError: If there's a protocol error.
-            TimeoutError: If the read times out.
+        No locks. Frames arrive via the Protocol's data_received callback
+        and are queued. This just awaits the queue.
         """
-        if not self._connected or self._parser is None or self._reader is None:
+        if not self._connected:
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 
-        async with self._read_lock:
-            # Return pending frame if available
-            if self._pending_frames:
-                return self._pending_frames.pop(0)
+        while True:
+            try:
+                if self._config.read_timeout:
+                    item = await asyncio.wait_for(
+                        self._frame_queue.get(),
+                        timeout=self._config.read_timeout,
+                    )
+                else:
+                    item = await self._frame_queue.get()
+            except asyncio.TimeoutError:
+                msg = "Read operation timed out"
+                raise TimeoutError(
+                    msg,
+                    timeout=self._config.read_timeout or 0,
+                    operation="recv",
+                ) from None
 
-            # Read until we have at least one complete frame
-            while True:
-                try:
-                    if self._config.read_timeout:
-                        chunk = await asyncio.wait_for(
-                            self._reader.read(65536),
-                            timeout=self._config.read_timeout,
+            if item is _CONNECTION_LOST:
+                self._connected = False
+                msg = "Connection closed by remote"
+                raise ConnectionError(msg)
+
+            frame = item
+
+            # Handle close frame
+            if int(frame.opcode) == 0x8:
+                self._close_code = frame.close_code or CloseCode.NO_STATUS
+                self._close_reason = frame.close_reason
+
+                if not self._closing:
+                    self._closing = True
+                    if self._parser is not None and self._asyncio_transport is not None:
+                        close_echo = self._parser.encode_close(
+                            self._close_code, self._close_reason, True
                         )
-                    else:
-                        chunk = await self._reader.read(65536)
-                except asyncio.TimeoutError:
-                    msg = "Read operation timed out"
-                    raise TimeoutError(
-                        msg,
-                        timeout=self._config.read_timeout or 0,
-                        operation="recv",
-                    ) from None
+                        with contextlib.suppress(Exception):
+                            self._asyncio_transport.write(close_echo)
 
-                if not chunk:
-                    self._connected = False
-                    msg = "Connection closed by remote"
-                    raise ConnectionError(msg)
+                self._connected = False
+                await self._close_transport()
+                msg = "Connection closed by remote"
+                raise ConnectionError(msg)
 
-                # Feed data to parser
-                try:
-                    frames, _ = self._parser.feed(chunk)
-                except ValueError as e:
-                    raise ProtocolError(str(e)) from e
+            # Skip PONG frames (handled by heartbeat manager externally)
+            if int(frame.opcode) == 0xA:
+                continue
 
-                if frames:
-                    # Handle control frames automatically
-                    data_frames: list[Frame] = []
-                    for frame in frames:
-                        if frame.opcode == Opcode.CLOSE:
-                            await self._handle_close_frame(frame)
-                        elif frame.opcode == Opcode.PING:
-                            await self._handle_ping_frame(frame)
-                        elif frame.opcode == Opcode.PONG:
-                            # Pong frames are typically handled by heartbeat manager
-                            pass
-                        else:
-                            # Decompress if RSV1 is set (permessage-deflate)
-                            if frame.rsv1 and self._deflater is not None:
-                                decompressed = self._deflater.decompress(frame.payload)
-                                frame = Frame(  # noqa: PLW2901
-                                    opcode=Opcode(int(frame.opcode)),
-                                    payload=decompressed,
-                                    fin=frame.fin,
-                                )
-                            data_frames.append(frame)
-
-                    if data_frames:
-                        # Return first frame, queue the rest
-                        self._pending_frames.extend(data_frames[1:])
-                        return data_frames[0]
-
-    async def _handle_close_frame(self, frame: Frame) -> None:
-        """Handle a received close frame.
-
-        Args:
-            frame: The close frame.
-        """
-        self._close_code = frame.close_code or CloseCode.NO_STATUS
-        self._close_reason = frame.close_reason
-
-        if not self._closing:
-            # Echo the close frame
-            self._closing = True
-            if self._parser is not None:
-                close_frame = self._parser.encode_close(
-                    self._close_code, self._close_reason, True
-                )
-                with contextlib.suppress(Exception):
-                    await self._send_raw(close_frame)
-
-        self._connected = False
-        await self._close_transport()
-
-    async def _handle_ping_frame(self, frame: Frame) -> None:
-        """Handle a received ping frame by sending a pong.
-
-        Args:
-            frame: The ping frame.
-        """
-        if self._parser is None:
-            return
-
-        # Send pong with same payload
-        pong_frame = self._parser.encode(int(Opcode.PONG), frame.payload, True, True)
-        with contextlib.suppress(Exception):
-            await self._send_raw(pong_frame)
+            return frame
 
     async def ping(self, payload: bytes = b"") -> None:
-        """Send a ping frame.
-
-        Args:
-            payload: Optional payload for the ping (max 125 bytes).
-
-        Raises:
-            ValueError: If payload is too large.
-            ConnectionError: If not connected.
-        """
+        """Send a ping frame."""
         if len(payload) > 125:
             msg = "Ping payload must be 125 bytes or less"
             raise ValueError(msg)
 
-        if not self._connected or self._parser is None:
+        if not self._connected or self._parser is None or self._asyncio_transport is None:
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 
         ping_data = self._parser.encode(int(Opcode.PING), payload, True, True)
-        await self._send_raw(ping_data)
+        self._asyncio_transport.write(ping_data)
 
     async def close(self, code: int = CloseCode.NORMAL, reason: str = "") -> None:
-        """Close the WebSocket connection gracefully.
-
-        Args:
-            code: The close code (default: 1000 normal closure).
-            reason: Optional close reason string.
-        """
+        """Close the WebSocket connection gracefully."""
         if not self._connected or self._closing:
             return
 
@@ -597,12 +564,12 @@ class AsyncTransport(AbstractTransport):
         self._close_code = code
         self._close_reason = reason
 
-        if self._parser is not None:
+        if self._parser is not None and self._asyncio_transport is not None:
             with contextlib.suppress(Exception):
                 close_frame = self._parser.encode_close(code, reason, True)
-                await self._send_raw(close_frame)
+                self._asyncio_transport.write(close_frame)
 
-                # Wait for close frame response with timeout
+                # Wait briefly for close response
                 with contextlib.suppress(asyncio.TimeoutError):
                     await asyncio.wait_for(self._wait_for_close(), timeout=5.0)
 
@@ -611,31 +578,25 @@ class AsyncTransport(AbstractTransport):
 
     async def _wait_for_close(self) -> None:
         """Wait for the server's close frame."""
-        if self._reader is None or self._parser is None:
-            return
-
         while self._connected:
             try:
-                chunk = await asyncio.wait_for(self._reader.read(4096), timeout=1.0)
-                if not chunk:
-                    break
-                frames, _ = self._parser.feed(chunk)
-                for frame in frames:
-                    if frame.opcode == Opcode.CLOSE:
-                        return
-            except Exception:
-                break
+                item = await asyncio.wait_for(
+                    self._frame_queue.get(), timeout=1.0
+                )
+                if item is _CONNECTION_LOST:
+                    return
+                if int(item.opcode) == 0x8:
+                    return
+            except (asyncio.TimeoutError, Exception):
+                return
 
     async def _close_transport(self) -> None:
         """Close the underlying transport."""
-        if self._writer is not None:
-            try:
-                self._writer.close()
-                await self._writer.wait_closed()
-            except Exception:
-                pass
-            self._writer = None
-        self._reader = None
+        if self._asyncio_transport is not None:
+            with contextlib.suppress(Exception):
+                self._asyncio_transport.close()
+            self._asyncio_transport = None
+        self._protocol = None
         self._parser = None
         self._deflater = None
 

@@ -117,8 +117,8 @@ class TestAsyncTransportIO:
         transport = AsyncTransport(config)
         await transport.connect(live_server_url)
         await transport.close()
-        assert transport._writer is None
-        assert transport._reader is None
+        assert transport._asyncio_transport is None
+        assert transport._protocol is None
         assert transport._parser is None
         assert transport._deflater is None
 
