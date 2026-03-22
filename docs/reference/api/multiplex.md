@@ -2,7 +2,7 @@
 
 Manages multiple logical subscriptions over a single WebSocket connection.
 
-::: wsfabric.multiplex.MultiplexConnection
+::: wsfabric.multiplex.Multiplex
     options:
       show_source: true
       members:

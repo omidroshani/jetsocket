@@ -2,14 +2,13 @@
 
 Pre-configured WebSocket profiles for common use cases.
 
-::: wsfabric.presets.Presets
-    options:
-      show_source: true
-      members:
-        - trading
-        - llm_stream
-        - dashboard
-        - minimal
+::: wsfabric.presets.trading
+
+::: wsfabric.presets.llm_stream
+
+::: wsfabric.presets.dashboard
+
+::: wsfabric.presets.minimal
 
 ## Usage
 

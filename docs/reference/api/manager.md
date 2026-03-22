@@ -2,7 +2,7 @@
 
 The core async WebSocket client with automatic reconnection, heartbeat, and message buffering.
 
-::: wsfabric.manager.WebSocketManager
+::: wsfabric.manager.WebSocket
     options:
       show_source: true
       members:
