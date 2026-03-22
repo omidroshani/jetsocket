@@ -26,12 +26,19 @@ from jetsocket.transport.base import (
     create_default_ssl_context,
 )
 from jetsocket.transport.uri import WebSocketURI, parse_uri
-from jetsocket.types import CloseCode, Frame, Opcode
+from jetsocket.types import CloseCode
 
 if TYPE_CHECKING:
     pass
 
-from jetsocket._core import Deflater, FrameParser, Handshake, parse_deflate_params
+from jetsocket._core import (
+    Deflater,
+    Frame,
+    FrameParser,
+    Handshake,
+    Opcode,
+    parse_deflate_params,
+)
 
 
 class SyncTransport(AbstractTransport):
@@ -331,7 +338,7 @@ class SyncTransport(AbstractTransport):
         rsv1 = frame.rsv1
         if (
             self._deflater is not None
-            and not frame.opcode.is_control_frame
+            and not frame.opcode.is_control_frame 
             and len(payload) >= self._config.compression_threshold
         ):
             payload = self._deflater.compress(payload)

@@ -19,6 +19,7 @@ from typing import (
     TypeVar,
 )
 
+from jetsocket._core import Opcode
 from jetsocket.backoff import BackoffConfig, BackoffStrategy
 from jetsocket.buffer import BufferConfig, MessageBuffer, ReplayConfig
 from jetsocket.events import (
@@ -53,7 +54,7 @@ from jetsocket.state import ConnectionState, is_valid_transition
 from jetsocket.stats import ConnectionStats, _MutableStats
 from jetsocket.transport._async import AsyncTransport
 from jetsocket.transport.base import BaseTransportConfig
-from jetsocket.types import CloseCode, Opcode
+from jetsocket.types import CloseCode
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -248,7 +249,7 @@ class WebSocket(Generic[T]):
     def _setup_typed_serialization(self, model_type: type) -> None:
         """Configure serializer/deserializer for Pydantic model type."""
         try:
-            from pydantic import BaseModel  # noqa: PLC0415
+            from pydantic import BaseModel  # type: ignore[import-not-found]  # noqa: PLC0415, I001
         except ImportError as e:
             raise ImportError(
                 "pydantic is required for message_type parameter. "
@@ -258,7 +259,7 @@ class WebSocket(Generic[T]):
         import json as json_mod  # noqa: PLC0415
 
         def deserializer(data: bytes) -> Any:
-            return model_type.model_validate_json(data)  # type: ignore[union-attr]
+            return model_type.model_validate_json(data)  # type: ignore[attr-defined]
 
         def serializer(msg: Any) -> bytes:
             if isinstance(msg, BaseModel):

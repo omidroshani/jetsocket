@@ -17,25 +17,37 @@ class Opcode(IntEnum):
     @property
     def is_control_frame(self) -> bool: ...
     @property
+    def is_control(self) -> bool: ...
+    @property
     def is_data_frame(self) -> bool: ...
+    @property
+    def is_data(self) -> bool: ...
 
 class Frame:
     """A parsed WebSocket frame."""
 
-    @property
-    def opcode(self) -> Opcode: ...
-    @property
-    def fin(self) -> bool: ...
-    @property
-    def rsv1(self) -> bool: ...
-    @property
-    def rsv2(self) -> bool: ...
-    @property
-    def rsv3(self) -> bool: ...
-    @property
-    def payload(self) -> bytes: ...
+    opcode: Opcode
+    payload: bytes
+    fin: bool
+    rsv1: bool
+    rsv2: bool
+    rsv3: bool
+
+    def __init__(
+        self,
+        opcode: Opcode,
+        payload: bytes,
+        fin: bool = True,
+        rsv1: bool = False,
+        rsv2: bool = False,
+        rsv3: bool = False,
+    ) -> None: ...
     @property
     def payload_len(self) -> int: ...
+    @property
+    def close_code(self) -> int | None: ...
+    @property
+    def close_reason(self) -> str: ...
     def as_text(self) -> str: ...
 
 class FrameParser:

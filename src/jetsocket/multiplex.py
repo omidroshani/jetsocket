@@ -286,7 +286,7 @@ class Multiplex(Generic[T]):
             )
         elif channel_key is not None:
             self._config = MultiplexConfig(
-                channel_extractor=lambda msg, _k=channel_key: (
+                channel_extractor=lambda msg, _k=channel_key: (  # type: ignore[misc]
                     msg.get(_k) if isinstance(msg, dict) else None
                 ),
                 subscribe_message=subscribe_msg,

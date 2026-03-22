@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from jetsocket.types import Frame
+    from jetsocket._core import Frame
 
 
 @runtime_checkable

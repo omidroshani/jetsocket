@@ -37,7 +37,15 @@ class Opcode(IntEnum):
         return self >= 0x8
 
     @property
+    def is_control(self):
+        return self >= 0x8
+
+    @property
     def is_data_frame(self):
+        return self <= 0x2
+
+    @property
+    def is_data(self):
         return self <= 0x2
 
 
@@ -126,6 +134,20 @@ class Frame:
     def as_text(self):
         """Decode payload as UTF-8 text."""
         return self.payload.decode("utf-8")
+
+    @property
+    def close_code(self):
+        """Extract close code from a close frame payload."""
+        if int(self.opcode) != 0x8 or len(self.payload) < 2:
+            return None
+        return int.from_bytes(self.payload[:2], "big")
+
+    @property
+    def close_reason(self):
+        """Extract close reason from a close frame payload."""
+        if int(self.opcode) != 0x8 or len(self.payload) <= 2:
+            return ""
+        return self.payload[2:].decode("utf-8", errors="replace")
 
     def __repr__(self):
         return f"Frame(opcode={self.opcode!r}, fin={self.fin}, payload_len={len(self.payload)})"

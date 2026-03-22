@@ -24,7 +24,7 @@ from jetsocket.transport.base import (
     create_default_ssl_context,
 )
 from jetsocket.transport.uri import WebSocketURI, parse_uri
-from jetsocket.types import CloseCode, Frame, Opcode
+from jetsocket.types import CloseCode
 
 if TYPE_CHECKING:
     pass
@@ -34,8 +34,10 @@ ResolvedAddress = tuple[socket.AddressFamily, str]
 
 from jetsocket._core import (  # noqa: E402
     Deflater,
+    Frame,
     FrameParser,
     Handshake,
+    Opcode,
     parse_deflate_params,
 )
 
@@ -569,7 +571,7 @@ class AsyncTransport(AbstractTransport):
             if int(frame.opcode) == 0xA:
                 continue
 
-            return frame
+            return frame # type: ignore[no-any-return]
 
     async def ping(self, payload: bytes = b"") -> None:
         """Send a ping frame."""

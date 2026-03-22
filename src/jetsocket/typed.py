@@ -110,7 +110,7 @@ class TypedWebSocket(WebSocket[T], Generic[T]):
     @property
     def message_type(self) -> type[T]:
         """Get the message type class."""
-        return self._message_type
+        return self._message_type # type: ignore[return-value]
 
     @property
     def strict(self) -> bool:
