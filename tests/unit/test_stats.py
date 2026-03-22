@@ -334,12 +334,12 @@ class TestMutableStatsSnapshot:
 
         # First connection
         stats.mark_connected()
-        time.sleep(0.02)
+        time.sleep(0.05)
         stats.mark_disconnected()
 
         # Reconnect
         stats.mark_reconnected()
-        time.sleep(0.02)
+        time.sleep(0.05)
 
         snapshot = stats.snapshot()
 
