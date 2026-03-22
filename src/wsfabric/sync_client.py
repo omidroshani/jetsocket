@@ -1,6 +1,6 @@
 """Synchronous WebSocket client for WSFabric.
 
-This module provides a synchronous API that wraps the async WebSocketManager
+This module provides a synchronous API that wraps the async WebSocket
 using a background thread with its own event loop. This approach provides
 full feature parity with the async API including reconnection, heartbeat,
 buffering, and event handling.
@@ -30,7 +30,7 @@ from wsfabric.buffer import BufferConfig, ReplayConfig
 from wsfabric.events import EventData, EventType, Handler, MessageEvent
 from wsfabric.exceptions import ConnectionError, InvalidStateError, TimeoutError
 from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 from wsfabric.state import ConnectionState
 from wsfabric.stats import ConnectionStats, _MutableStats
 
@@ -61,7 +61,7 @@ atexit.register(_cleanup_clients)
 class SyncWebSocket(Generic[T]):
     """Synchronous WebSocket client with full feature parity.
 
-    Wraps WebSocketManager with a background event loop thread, providing
+    Wraps WebSocket with a background event loop thread, providing
     a blocking API for WebSocket communication. Supports all features of
     the async API including reconnection, heartbeat, buffering, and events.
 
@@ -144,7 +144,7 @@ class SyncWebSocket(Generic[T]):
         # Background thread and event loop
         self._thread: threading.Thread | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
-        self._manager: WebSocketManager[T] | None = None
+        self._manager: WebSocket[T] | None = None
         self._started = threading.Event()
         self._closed = False
 
@@ -534,7 +534,7 @@ class SyncWebSocket(Generic[T]):
             asyncio.set_event_loop(self._loop)
 
             # Create the manager
-            self._manager = WebSocketManager[T](self._uri, **self._manager_kwargs)
+            self._manager = WebSocket[T](self._uri, **self._manager_kwargs)
 
             # Register pending handlers
             with self._lock:
@@ -593,7 +593,3 @@ class SyncWebSocket(Generic[T]):
                 self.close()
         except Exception:
             pass
-
-
-# Backward compatibility alias
-SyncWebSocketClient = SyncWebSocket

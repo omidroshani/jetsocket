@@ -1,4 +1,4 @@
-"""Extended tests for WebSocketManager covering uncovered paths."""
+"""Extended tests for WebSocket covering uncovered paths."""
 
 from __future__ import annotations
 
@@ -7,40 +7,40 @@ import pytest
 from wsfabric.backoff import BackoffConfig
 from wsfabric.buffer import BufferConfig
 from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 from wsfabric.state import ConnectionState
 
 
 class TestManagerProperties:
-    """Test WebSocketManager property accessors."""
+    """Test WebSocket property accessors."""
 
     def test_latency_ms_none_without_heartbeat(self) -> None:
         """Test latency_ms returns None without heartbeat."""
-        ws = WebSocketManager("ws://example.com/ws", heartbeat=None)
+        ws = WebSocket("ws://example.com/ws", heartbeat=None)
         assert ws.latency_ms is None
 
     def test_state_default_idle(self) -> None:
         """Test default state is IDLE."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         assert ws.state == ConnectionState.IDLE
 
     def test_is_connected_false_by_default(self) -> None:
         """Test is_connected is False by default."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         assert ws.is_connected is False
 
     def test_uri_property(self) -> None:
         """Test uri property."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         assert ws._uri == "ws://example.com/ws"
 
 
 class TestManagerSendErrors:
-    """Test WebSocketManager send error paths."""
+    """Test WebSocket send error paths."""
 
     async def test_send_when_not_connected_raises(self) -> None:
         """Test send raises when not connected."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         from wsfabric.exceptions import InvalidStateError
 
         with pytest.raises(InvalidStateError):
@@ -48,7 +48,7 @@ class TestManagerSendErrors:
 
     async def test_send_raw_when_not_connected_raises(self) -> None:
         """Test send_raw raises when not connected."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         from wsfabric.exceptions import InvalidStateError
 
         with pytest.raises(InvalidStateError):
@@ -56,17 +56,17 @@ class TestManagerSendErrors:
 
 
 class TestManagerConfiguration:
-    """Test WebSocketManager configuration options."""
+    """Test WebSocket configuration options."""
 
     def test_default_config(self) -> None:
         """Test default configuration."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         assert ws._reconnect_enabled is True
         assert ws._close_timeout == 5.0
 
     def test_custom_config(self) -> None:
         """Test custom configuration."""
-        ws = WebSocketManager(
+        ws = WebSocket(
             "ws://example.com/ws",
             reconnect=False,
             backoff=BackoffConfig(base=0.5, cap=10.0),
@@ -87,7 +87,7 @@ class TestManagerConfiguration:
 
     def test_with_heartbeat(self) -> None:
         """Test with heartbeat configured."""
-        ws = WebSocketManager(
+        ws = WebSocket(
             "ws://example.com/ws", heartbeat=HeartbeatConfig(interval=20.0)
         )
         assert ws._heartbeat_config is not None
@@ -102,7 +102,7 @@ class TestManagerConfiguration:
         def my_deser(data: bytes) -> object:
             return "parsed"
 
-        ws = WebSocketManager(
+        ws = WebSocket(
             "ws://example.com/ws",
             serializer=my_ser,
             deserializer=my_deser,
@@ -112,11 +112,11 @@ class TestManagerConfiguration:
 
 
 class TestManagerEventSystem:
-    """Test event registration on WebSocketManager."""
+    """Test event registration on WebSocket."""
 
     def test_on_decorator(self) -> None:
         """Test @ws.on decorator registers handler."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
 
         @ws.on("message")
         async def handler(event: object) -> None:
@@ -127,7 +127,7 @@ class TestManagerEventSystem:
 
     def test_add_handler(self) -> None:
         """Test add_handler registers handler."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
 
         async def handler(event: object) -> None:
             pass
@@ -137,11 +137,11 @@ class TestManagerEventSystem:
 
 
 class TestManagerStats:
-    """Test WebSocketManager stats."""
+    """Test WebSocket stats."""
 
     def test_stats_returns_snapshot(self) -> None:
         """Test stats returns a ConnectionStats snapshot."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         stats = ws.stats()
         assert stats.state == ConnectionState.IDLE
         assert stats.messages_sent == 0
@@ -150,15 +150,15 @@ class TestManagerStats:
 
     def test_stats_uptime_zero_when_not_connected(self) -> None:
         """Test uptime is 0 when not connected."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         stats = ws.stats()
         assert stats.uptime_seconds == 0.0
 
 
 class TestManagerAsyncIteration:
-    """Test WebSocketManager async iteration."""
+    """Test WebSocket async iteration."""
 
     async def test_aiter_returns_self(self) -> None:
         """Test __aiter__ returns the manager."""
-        ws = WebSocketManager("ws://example.com/ws")
+        ws = WebSocket("ws://example.com/ws")
         assert ws.__aiter__() is ws

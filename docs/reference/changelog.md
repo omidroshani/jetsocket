@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Simplified API names: `WebSocket` (was `WebSocketManager`), `SyncWebSocket` (was `SyncWebSocketClient`), `Multiplex` (was `MultiplexConnection`)
 - Improved reconnection logic with configurable backoff
 - Enhanced heartbeat management with application-level ping support
 

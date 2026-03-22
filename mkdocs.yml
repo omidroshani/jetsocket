@@ -107,11 +107,11 @@ nav:
     - Multi-Symbol Dashboard: examples/multi-symbol-dashboard.md
     - Sync Scripting: examples/sync-scripting.md
   - API Reference:
-    - WebSocketManager: reference/api/manager.md
-    - SyncWebSocketClient: reference/api/sync-client.md
+    - WebSocket: reference/api/manager.md
+    - SyncWebSocket: reference/api/sync-client.md
     - ConnectionPool: reference/api/pool.md
-    - MultiplexConnection: reference/api/multiplex.md
-    - TypedWebSocket: reference/api/typed.md
+    - Multiplex: reference/api/multiplex.md
+    - Typed Messages: reference/api/typed.md
     - Presets: reference/api/presets.md
     - Events: reference/api/events.md
     - Exceptions: reference/api/exceptions.md

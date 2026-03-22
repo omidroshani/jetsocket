@@ -1,4 +1,4 @@
-"""I/O tests for WebSocketManager using the live echo server.
+"""I/O tests for WebSocket using the live echo server.
 
 Covers manager paths that require a real WebSocket connection.
 """
@@ -8,16 +8,16 @@ from __future__ import annotations
 import asyncio
 
 from wsfabric.buffer import BufferConfig
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 from wsfabric.state import ConnectionState
 
 
 class TestManagerIO:
-    """Test WebSocketManager with a live server."""
+    """Test WebSocket with a live server."""
 
     async def test_connect_and_close(self, live_server_url: str) -> None:
         """Test basic connect and close."""
-        ws = WebSocketManager(live_server_url)
+        ws = WebSocket(live_server_url)
         await ws.connect()
         assert ws.is_connected
         assert ws.state == ConnectionState.CONNECTED
@@ -26,21 +26,21 @@ class TestManagerIO:
 
     async def test_send_recv(self, live_server_url: str) -> None:
         """Test send and receive."""
-        async with WebSocketManager(live_server_url) as ws:
+        async with WebSocket(live_server_url) as ws:
             await ws.send({"msg": "hello"})
             result = await ws.recv()
             assert result["msg"] == "hello"
 
     async def test_send_raw(self, live_server_url: str) -> None:
         """Test send_raw with bytes."""
-        async with WebSocketManager(live_server_url) as ws:
+        async with WebSocket(live_server_url) as ws:
             await ws.send_raw(b'{"raw": true}')
             result = await ws.recv()
             assert result["raw"] is True
 
     async def test_multiple_messages(self, live_server_url: str) -> None:
         """Test multiple message exchange."""
-        async with WebSocketManager(live_server_url) as ws:
+        async with WebSocket(live_server_url) as ws:
             for i in range(10):
                 await ws.send({"i": i})
                 result = await ws.recv()
@@ -48,7 +48,7 @@ class TestManagerIO:
 
     async def test_stats_update(self, live_server_url: str) -> None:
         """Test stats update after messages."""
-        async with WebSocketManager(live_server_url) as ws:
+        async with WebSocket(live_server_url) as ws:
             await ws.send({"test": 1})
             await ws.recv()
             await ws.send({"test": 2})
@@ -64,7 +64,7 @@ class TestManagerIO:
 
     async def test_context_manager(self, live_server_url: str) -> None:
         """Test async context manager auto-closes."""
-        async with WebSocketManager(live_server_url) as ws:
+        async with WebSocket(live_server_url) as ws:
             assert ws.is_connected
         assert not ws.is_connected
 
@@ -72,7 +72,7 @@ class TestManagerIO:
         """Test event handlers fire during lifecycle."""
         events: list[str] = []
 
-        ws = WebSocketManager(live_server_url)
+        ws = WebSocket(live_server_url)
 
         @ws.on("connected")
         async def on_connected(event: object) -> None:
@@ -93,7 +93,7 @@ class TestManagerIO:
 
     async def test_with_buffer(self, live_server_url: str) -> None:
         """Test with message buffer enabled."""
-        ws = WebSocketManager(
+        ws = WebSocket(
             live_server_url,
             buffer=BufferConfig(capacity=100),
         )
@@ -107,7 +107,7 @@ class TestManagerIO:
 
     async def test_with_compression_disabled(self, live_server_url: str) -> None:
         """Test with compression disabled."""
-        ws = WebSocketManager(live_server_url, compress=False)
+        ws = WebSocket(live_server_url, compress=False)
         await ws.connect()
         try:
             await ws.send({"no_compress": True})
@@ -118,7 +118,7 @@ class TestManagerIO:
 
     async def test_latency_ms_without_heartbeat(self, live_server_url: str) -> None:
         """Test latency_ms is None without heartbeat."""
-        ws = WebSocketManager(live_server_url, heartbeat=None)
+        ws = WebSocket(live_server_url, heartbeat=None)
         await ws.connect()
         try:
             assert ws.latency_ms is None
@@ -127,13 +127,13 @@ class TestManagerIO:
 
 
 class TestSyncClientIO:
-    """Test SyncWebSocketClient with a live server."""
+    """Test SyncWebSocket with a live server."""
 
     def test_connect_send_recv(self, live_server_url: str) -> None:
         """Test basic sync client usage."""
-        from wsfabric.sync_client import SyncWebSocketClient
+        from wsfabric.sync_client import SyncWebSocket
 
-        client = SyncWebSocketClient(
+        client = SyncWebSocket(
             live_server_url,
             reconnect=False,
             connect_timeout=5.0,
@@ -149,9 +149,9 @@ class TestSyncClientIO:
 
     def test_stats(self, live_server_url: str) -> None:
         """Test sync client stats."""
-        from wsfabric.sync_client import SyncWebSocketClient
+        from wsfabric.sync_client import SyncWebSocket
 
-        client = SyncWebSocketClient(
+        client = SyncWebSocket(
             live_server_url,
             reconnect=False,
             connect_timeout=5.0,
@@ -168,9 +168,9 @@ class TestSyncClientIO:
 
     def test_multiple_messages(self, live_server_url: str) -> None:
         """Test sending and receiving multiple messages."""
-        from wsfabric.sync_client import SyncWebSocketClient
+        from wsfabric.sync_client import SyncWebSocket
 
-        client = SyncWebSocketClient(
+        client = SyncWebSocket(
             live_server_url,
             reconnect=False,
             connect_timeout=5.0,
@@ -186,9 +186,9 @@ class TestSyncClientIO:
 
     def test_context_manager(self, live_server_url: str) -> None:
         """Test sync client context manager."""
-        from wsfabric.sync_client import SyncWebSocketClient
+        from wsfabric.sync_client import SyncWebSocket
 
-        with SyncWebSocketClient(
+        with SyncWebSocket(
             live_server_url,
             reconnect=False,
             connect_timeout=5.0,

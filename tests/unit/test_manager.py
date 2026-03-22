@@ -1,4 +1,4 @@
-"""Tests for WebSocketManager."""
+"""Tests for WebSocket."""
 
 from __future__ import annotations
 
@@ -19,17 +19,17 @@ from wsfabric.events import (
 )
 from wsfabric.exceptions import ConnectionError, HandshakeError, InvalidStateError
 from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 from wsfabric.state import ConnectionState
 from wsfabric.types import CloseCode, Frame, Opcode
 
 
-class TestWebSocketManagerInit:
-    """Tests for WebSocketManager initialization."""
+class TestWebSocketInit:
+    """Tests for WebSocket initialization."""
 
     def test_default_init(self) -> None:
         """Test initialization with defaults."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         assert ws.uri == "wss://example.com/ws"
         assert ws.state == ConnectionState.IDLE
@@ -38,7 +38,7 @@ class TestWebSocketManagerInit:
 
     def test_custom_init(self) -> None:
         """Test initialization with custom config."""
-        ws = WebSocketManager(
+        ws = WebSocket(
             "wss://example.com/ws",
             reconnect=False,
             backoff=BackoffConfig(base=2.0),
@@ -63,7 +63,7 @@ class TestWebSocketManagerInit:
         def custom_deserializer(data: bytes) -> str:
             return data.decode().upper()
 
-        ws = WebSocketManager(
+        ws = WebSocket(
             "wss://example.com/ws",
             serializer=custom_serializer,
             deserializer=custom_deserializer,
@@ -73,12 +73,12 @@ class TestWebSocketManagerInit:
         assert ws._deserializer(b"hello") == "HELLO"
 
 
-class TestWebSocketManagerEventRegistration:
+class TestWebSocketEventRegistration:
     """Tests for event handler registration."""
 
     def test_on_decorator(self) -> None:
         """Test @ws.on() decorator."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
         received: list[ConnectedEvent] = []
 
         @ws.on("connected")
@@ -89,7 +89,7 @@ class TestWebSocketManagerEventRegistration:
 
     def test_add_handler(self) -> None:
         """Test programmatic handler registration."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         async def handler(event: ConnectedEvent) -> None:
             pass
@@ -99,7 +99,7 @@ class TestWebSocketManagerEventRegistration:
 
     def test_remove_handler(self) -> None:
         """Test handler removal."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         async def handler(event: ConnectedEvent) -> None:
             pass
@@ -110,7 +110,7 @@ class TestWebSocketManagerEventRegistration:
 
     def test_remove_handler_not_found(self) -> None:
         """Test removing non-existent handler."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         async def handler(event: ConnectedEvent) -> None:
             pass
@@ -118,12 +118,12 @@ class TestWebSocketManagerEventRegistration:
         assert ws.remove_handler("connected", handler) is False
 
 
-class TestWebSocketManagerStats:
+class TestWebSocketStats:
     """Tests for connection statistics."""
 
     def test_stats_idle(self) -> None:
         """Test stats in idle state."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
         stats = ws.stats()
 
         assert stats.state == ConnectionState.IDLE
@@ -133,7 +133,7 @@ class TestWebSocketManagerStats:
 
     def test_stats_snapshot_is_immutable(self) -> None:
         """Test that stats snapshot is independent."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         stats1 = ws.stats()
         ws._stats.record_message_sent(100)
@@ -143,13 +143,13 @@ class TestWebSocketManagerStats:
         assert stats2.messages_sent == 1
 
 
-class TestWebSocketManagerConnect:
+class TestWebSocketConnect:
     """Tests for connection lifecycle."""
 
     @pytest.mark.asyncio
     async def test_connect_invalid_state(self) -> None:
         """Test connecting from invalid state."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
         ws._state = ConnectionState.CONNECTING
 
         with pytest.raises(InvalidStateError) as exc_info:
@@ -160,7 +160,7 @@ class TestWebSocketManagerConnect:
     @pytest.mark.asyncio
     async def test_send_not_connected(self) -> None:
         """Test sending when not connected."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         with pytest.raises(InvalidStateError) as exc_info:
             await ws.send({"test": "data"})
@@ -170,7 +170,7 @@ class TestWebSocketManagerConnect:
     @pytest.mark.asyncio
     async def test_recv_not_connected(self) -> None:
         """Test receiving when not connected."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         with pytest.raises(InvalidStateError) as exc_info:
             await ws.recv()
@@ -180,7 +180,7 @@ class TestWebSocketManagerConnect:
     @pytest.mark.asyncio
     async def test_run_not_connected(self) -> None:
         """Test running when not connected."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         with pytest.raises(InvalidStateError) as exc_info:
             await ws.run()
@@ -188,13 +188,13 @@ class TestWebSocketManagerConnect:
         assert exc_info.value.current_state == "idle"
 
 
-class TestWebSocketManagerWithMockedTransport:
+class TestWebSocketWithMockedTransport:
     """Tests using mocked transport."""
 
     @pytest.mark.asyncio
     async def test_connect_success(self) -> None:
         """Test successful connection."""
-        ws = WebSocketManager("wss://example.com/ws", reconnect=False)
+        ws = WebSocket("wss://example.com/ws", reconnect=False)
 
         events_received: list[str] = []
 
@@ -230,7 +230,7 @@ class TestWebSocketManagerWithMockedTransport:
     @pytest.mark.asyncio
     async def test_connect_failure_no_reconnect(self) -> None:
         """Test connection failure without reconnect."""
-        ws = WebSocketManager("wss://example.com/ws", reconnect=False)
+        ws = WebSocket("wss://example.com/ws", reconnect=False)
 
         error_received: list[Exception] = []
 
@@ -251,7 +251,7 @@ class TestWebSocketManagerWithMockedTransport:
     @pytest.mark.asyncio
     async def test_close_idle(self) -> None:
         """Test closing when idle."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         # Should not raise
         await ws.close()
@@ -261,7 +261,7 @@ class TestWebSocketManagerWithMockedTransport:
     @pytest.mark.asyncio
     async def test_close_connected(self) -> None:
         """Test closing when connected."""
-        ws = WebSocketManager("wss://example.com/ws", reconnect=False)
+        ws = WebSocket("wss://example.com/ws", reconnect=False)
 
         events_received: list[str] = []
 
@@ -296,13 +296,13 @@ class TestWebSocketManagerWithMockedTransport:
         assert "closed" in events_received
 
 
-class TestWebSocketManagerSend:
+class TestWebSocketSend:
     """Tests for sending messages."""
 
     @pytest.mark.asyncio
     async def test_send_serializes_message(self) -> None:
         """Test that send serializes the message."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         mock_transport = AsyncMock()
         ws._transport = mock_transport
@@ -317,7 +317,7 @@ class TestWebSocketManagerSend:
     @pytest.mark.asyncio
     async def test_send_raw(self) -> None:
         """Test sending raw bytes."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         mock_transport = AsyncMock()
         ws._transport = mock_transport
@@ -330,7 +330,7 @@ class TestWebSocketManagerSend:
     @pytest.mark.asyncio
     async def test_send_updates_stats(self) -> None:
         """Test that send updates statistics."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         mock_transport = AsyncMock()
         ws._transport = mock_transport
@@ -343,19 +343,19 @@ class TestWebSocketManagerSend:
         assert stats.bytes_sent > 0
 
 
-class TestWebSocketManagerIteration:
+class TestWebSocketIteration:
     """Tests for async iteration."""
 
     @pytest.mark.asyncio
     async def test_aiter_returns_self(self) -> None:
         """Test __aiter__ returns self."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
         assert ws.__aiter__() is ws
 
     @pytest.mark.asyncio
     async def test_anext_from_queue(self) -> None:
         """Test __anext__ gets from queue."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
         ws._running = True
 
         await ws._message_queue.put({"test": "data"})
@@ -366,20 +366,20 @@ class TestWebSocketManagerIteration:
     @pytest.mark.asyncio
     async def test_anext_stops_when_not_running(self) -> None:
         """Test __anext__ raises StopAsyncIteration when not running."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
         ws._running = False
 
         with pytest.raises(StopAsyncIteration):
             await ws.__anext__()
 
 
-class TestWebSocketManagerContextManager:
+class TestWebSocketContextManager:
     """Tests for context manager support."""
 
     @pytest.mark.asyncio
     async def test_context_manager(self) -> None:
         """Test async context manager."""
-        ws = WebSocketManager("wss://example.com/ws", reconnect=False)
+        ws = WebSocket("wss://example.com/ws", reconnect=False)
 
         mock_transport = AsyncMock()
         mock_transport._subprotocol = None
@@ -394,12 +394,12 @@ class TestWebSocketManagerContextManager:
         assert ws.state == ConnectionState.CLOSED
 
 
-class TestWebSocketManagerFatalErrors:
+class TestWebSocketFatalErrors:
     """Tests for fatal error classification."""
 
     def test_fatal_http_codes(self) -> None:
         """Test that certain HTTP codes are fatal."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         # 401 Unauthorized
         error = HandshakeError("Unauthorized", status_code=401)
@@ -423,7 +423,7 @@ class TestWebSocketManagerFatalErrors:
 
     def test_fatal_close_codes(self) -> None:
         """Test that certain close codes are fatal."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         # Policy violation
         assert ws._is_fatal_code(CloseCode.POLICY_VIOLATION) is True
@@ -442,26 +442,26 @@ class TestWebSocketManagerFatalErrors:
 
     def test_value_error_is_fatal(self) -> None:
         """Test that ValueError is fatal."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         error = ValueError("Invalid configuration")
         assert ws._is_fatal_error(error) is True
 
     def test_type_error_is_fatal(self) -> None:
         """Test that TypeError is fatal."""
-        ws = WebSocketManager("wss://example.com/ws")
+        ws = WebSocket("wss://example.com/ws")
 
         error = TypeError("Type mismatch")
         assert ws._is_fatal_error(error) is True
 
 
-class TestWebSocketManagerReconnect:
+class TestWebSocketReconnect:
     """Tests for reconnection logic."""
 
     @pytest.mark.asyncio
     async def test_schedule_reconnect_emits_events(self) -> None:
         """Test that reconnection emits proper events."""
-        ws = WebSocketManager(
+        ws = WebSocket(
             "wss://example.com/ws",
             backoff=BackoffConfig(base=0.01, cap=0.1),
         )
@@ -506,7 +506,7 @@ class TestWebSocketManagerReconnect:
     @pytest.mark.asyncio
     async def test_reconnect_exhausted(self) -> None:
         """Test behavior when reconnection attempts are exhausted."""
-        ws = WebSocketManager(
+        ws = WebSocket(
             "wss://example.com/ws",
             backoff=BackoffConfig(base=0.01, max_attempts=1),
         )
@@ -530,13 +530,13 @@ class TestWebSocketManagerReconnect:
         assert "exhausted" in str(error_received[0]).lower()
 
 
-class TestWebSocketManagerHeartbeat:
+class TestWebSocketHeartbeat:
     """Tests for heartbeat integration."""
 
     @pytest.mark.asyncio
     async def test_heartbeat_started_on_connect(self) -> None:
         """Test that heartbeat is started when configured."""
-        ws = WebSocketManager(
+        ws = WebSocket(
             "wss://example.com/ws",
             heartbeat=HeartbeatConfig(interval=1.0, timeout=0.5),
             reconnect=False,
@@ -558,7 +558,7 @@ class TestWebSocketManagerHeartbeat:
     @pytest.mark.asyncio
     async def test_heartbeat_stopped_on_close(self) -> None:
         """Test that heartbeat is stopped on close."""
-        ws = WebSocketManager(
+        ws = WebSocket(
             "wss://example.com/ws",
             heartbeat=HeartbeatConfig(interval=1.0, timeout=0.5),
             reconnect=False,
@@ -584,13 +584,13 @@ class TestWebSocketManagerHeartbeat:
         assert ws._heartbeat is None
 
 
-class TestWebSocketManagerMessageLoop:
+class TestWebSocketMessageLoop:
     """Tests for message loop behavior."""
 
     @pytest.mark.asyncio
     async def test_message_loop_handles_messages(self) -> None:
         """Test that message loop processes messages."""
-        ws = WebSocketManager("wss://example.com/ws", reconnect=False)
+        ws = WebSocket("wss://example.com/ws", reconnect=False)
 
         messages_received: list[Any] = []
 

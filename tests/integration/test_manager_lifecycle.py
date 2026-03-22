@@ -1,4 +1,4 @@
-"""Integration tests for WebSocketManager lifecycle.
+"""Integration tests for WebSocket lifecycle.
 
 These tests use a real WebSocket server (via websockets library) to test
 the manager end-to-end including reconnection and heartbeat.
@@ -23,7 +23,7 @@ from wsfabric.events import (
     ReconnectedEvent,
     ReconnectingEvent,
 )
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 from wsfabric.state import ConnectionState
 
 if TYPE_CHECKING:
@@ -108,7 +108,7 @@ class TestManagerConnect:
 
     async def test_connect_and_close(self, echo_server: str) -> None:
         """Test basic connect and close."""
-        ws: WebSocketManager[Any] = WebSocketManager(echo_server, compress=False)
+        ws: WebSocket[Any] = WebSocket(echo_server, compress=False)
 
         await ws.connect()
         assert ws.state == ConnectionState.CONNECTED
@@ -120,7 +120,7 @@ class TestManagerConnect:
 
     async def test_connect_events(self, echo_server: str) -> None:
         """Test that connect emits proper events."""
-        ws: WebSocketManager[Any] = WebSocketManager(echo_server, compress=False)
+        ws: WebSocket[Any] = WebSocket(echo_server, compress=False)
 
         events_received: list[str] = []
 
@@ -141,7 +141,7 @@ class TestManagerConnect:
 
     async def test_close_events(self, echo_server: str) -> None:
         """Test that close emits proper events."""
-        ws: WebSocketManager[Any] = WebSocketManager(echo_server, compress=False)
+        ws: WebSocket[Any] = WebSocket(echo_server, compress=False)
 
         events_received: list[str] = []
 
@@ -161,7 +161,7 @@ class TestManagerConnect:
 
     async def test_context_manager(self, echo_server: str) -> None:
         """Test async context manager."""
-        async with WebSocketManager(echo_server, compress=False) as ws:
+        async with WebSocket(echo_server, compress=False) as ws:
             assert ws.is_connected
 
         assert ws.state == ConnectionState.CLOSED
@@ -173,7 +173,7 @@ class TestManagerMessaging:
 
     async def test_message_events(self, json_server: str) -> None:
         """Test that messages emit events."""
-        ws: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        ws: WebSocket[dict[str, Any]] = WebSocket(
             json_server, compress=False
         )
 
@@ -200,7 +200,7 @@ class TestManagerMessaging:
 
     async def test_stats_updated(self, json_server: str) -> None:
         """Test that stats are updated after messages."""
-        ws: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        ws: WebSocket[dict[str, Any]] = WebSocket(
             json_server, compress=False
         )
 
@@ -236,7 +236,7 @@ class TestManagerUptime:
 
     async def test_uptime_tracking(self, echo_server: str) -> None:
         """Test that uptime is tracked correctly."""
-        ws: WebSocketManager[str] = WebSocketManager(echo_server, compress=False)
+        ws: WebSocket[str] = WebSocket(echo_server, compress=False)
 
         await ws.connect()
 

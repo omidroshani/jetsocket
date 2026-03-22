@@ -13,7 +13,7 @@ from wsfabric.events import (
     ReplayCompletedEvent,
     ReplayStartedEvent,
 )
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 
 
 class TestReplayEvents:
@@ -71,12 +71,12 @@ class TestReplayEvents:
         assert event.policy == "drop_oldest"
 
 
-class TestWebSocketManagerBuffer:
-    """Tests for WebSocketManager buffer integration."""
+class TestWebSocketBuffer:
+    """Tests for WebSocket buffer integration."""
 
     def test_manager_without_buffer(self) -> None:
         """Test manager without buffer configuration."""
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080"
         )
         assert manager.buffer is None
@@ -85,7 +85,7 @@ class TestWebSocketManagerBuffer:
     def test_manager_with_buffer(self) -> None:
         """Test manager with buffer configuration."""
         config = BufferConfig(capacity=100)
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=config,
         )
@@ -102,7 +102,7 @@ class TestWebSocketManagerBuffer:
         buffer_config = BufferConfig(capacity=50)
         replay_config = ReplayConfig(mode="sequence_id", on_replay=replay_callback)
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,
@@ -130,7 +130,7 @@ class TestReplayOnReconnect:
         buffer_config = BufferConfig(capacity=100)
         replay_config = ReplayConfig(mode="sequence_id", on_replay=replay_callback)
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,
@@ -177,7 +177,7 @@ class TestReplayOnReconnect:
         buffer_config = BufferConfig(capacity=100)
         replay_config = ReplayConfig(mode="full_buffer")
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,
@@ -228,7 +228,7 @@ class TestReplayOnReconnect:
         buffer_config = BufferConfig(capacity=100)
         replay_config = ReplayConfig(mode="none")
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,
@@ -249,7 +249,7 @@ class TestReplayOnReconnect:
     @pytest.mark.asyncio
     async def test_replay_without_config(self) -> None:
         """Test replay with no replay configuration."""
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080"
         )
 
@@ -275,7 +275,7 @@ class TestReplayOnReconnect:
         buffer_config = BufferConfig(capacity=100)
         replay_config = ReplayConfig(mode="sequence_id", on_replay=failing_callback)
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,
@@ -316,7 +316,7 @@ class TestTrackReceivedMessage:
             on_replay=AsyncMock(),
         )
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,
@@ -335,7 +335,7 @@ class TestTrackReceivedMessage:
         buffer_config = BufferConfig(capacity=100)
         replay_config = ReplayConfig(mode="full_buffer")
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,
@@ -350,7 +350,7 @@ class TestTrackReceivedMessage:
     @pytest.mark.asyncio
     async def test_track_message_without_buffer(self) -> None:
         """Test that tracking does nothing without buffer."""
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080"
         )
 
@@ -363,7 +363,7 @@ class TestTrackReceivedMessage:
         buffer_config = BufferConfig(capacity=2, overflow_policy="drop_oldest")
         replay_config = ReplayConfig(mode="full_buffer")
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,
@@ -403,7 +403,7 @@ class TestTrackReceivedMessage:
             on_replay=AsyncMock(),
         )
 
-        manager: WebSocketManager[dict[str, Any]] = WebSocketManager(
+        manager: WebSocket[dict[str, Any]] = WebSocket(
             "ws://localhost:8080",
             buffer=buffer_config,
             replay=replay_config,

@@ -139,13 +139,3 @@ def minimal(uri: str, **overrides: Any) -> WebSocket[Any]:
     }
     defaults.update(overrides)
     return WebSocket(uri, **defaults)
-
-
-# Backward compatibility
-class Presets:
-    """Pre-configured WebSocket profiles. Use module-level functions instead."""
-
-    trading = staticmethod(trading)
-    llm_stream = staticmethod(llm_stream)
-    dashboard = staticmethod(dashboard)
-    minimal = staticmethod(minimal)

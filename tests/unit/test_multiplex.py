@@ -1,4 +1,4 @@
-"""Tests for MultiplexConnection."""
+"""Tests for Multiplex."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import pytest
 from wsfabric.exceptions import InvalidStateError, TimeoutError
 from wsfabric.multiplex import (
     MultiplexConfig,
-    MultiplexConnection,
+    Multiplex,
     MultiplexStats,
     Subscription,
     SubscriptionStats,
@@ -316,13 +316,13 @@ class TestSubscription:
         assert len(messages) == 0
 
 
-class TestMultiplexConnectionInit:
-    """Tests for MultiplexConnection initialization."""
+class TestMultiplexInit:
+    """Tests for Multiplex initialization."""
 
     def test_basic_init(self) -> None:
         """Test basic initialization."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         assert mux.uri == "wss://example.com/ws"
         assert mux.is_connected is False
@@ -331,7 +331,7 @@ class TestMultiplexConnectionInit:
     def test_init_with_manager_kwargs(self) -> None:
         """Test initialization with manager kwargs."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection(
+        mux = Multiplex(
             "wss://example.com/ws",
             config,
             manager_kwargs={"reconnect": False, "connect_timeout": 5.0},
@@ -342,7 +342,7 @@ class TestMultiplexConnectionInit:
     def test_repr(self) -> None:
         """Test string representation."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         repr_str = repr(mux)
 
@@ -351,14 +351,14 @@ class TestMultiplexConnectionInit:
         assert "idle" in repr_str
 
 
-class TestMultiplexConnectionLifecycle:
-    """Tests for MultiplexConnection lifecycle."""
+class TestMultiplexLifecycle:
+    """Tests for Multiplex lifecycle."""
 
     @pytest.mark.asyncio
     async def test_connect(self) -> None:
         """Test connecting."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -374,7 +374,7 @@ class TestMultiplexConnectionLifecycle:
     async def test_connect_already_connected(self) -> None:
         """Test connecting when already connected raises."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -392,7 +392,7 @@ class TestMultiplexConnectionLifecycle:
     async def test_connect_after_close(self) -> None:
         """Test connecting after close raises."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         await mux.close()
 
@@ -405,7 +405,7 @@ class TestMultiplexConnectionLifecycle:
     async def test_close_when_not_connected(self) -> None:
         """Test closing when not connected."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         # Should not raise
         await mux.close()
@@ -416,7 +416,7 @@ class TestMultiplexConnectionLifecycle:
     async def test_close_idempotent(self) -> None:
         """Test closing is idempotent."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         await mux.close()
         await mux.close()
@@ -433,13 +433,13 @@ class TestMultiplexConnectionLifecycle:
         mock_manager.state = ConnectionState.CONNECTED
 
         with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
-            async with MultiplexConnection("wss://example.com/ws", config) as mux:
+            async with Multiplex("wss://example.com/ws", config) as mux:
                 assert mux._manager is not None
 
         mock_manager.close.assert_called_once()
 
 
-class TestMultiplexConnectionSubscriptions:
+class TestMultiplexSubscriptions:
     """Tests for subscription management."""
 
     @pytest.mark.asyncio
@@ -449,7 +449,7 @@ class TestMultiplexConnectionSubscriptions:
             channel_extractor=lambda msg: msg.get("stream"),
             subscribe_message=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
         )
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -470,7 +470,7 @@ class TestMultiplexConnectionSubscriptions:
     async def test_subscribe_without_message(self) -> None:
         """Test subscribing without subscribe message configured."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -488,7 +488,7 @@ class TestMultiplexConnectionSubscriptions:
     async def test_subscribe_duplicate_returns_existing(self) -> None:
         """Test subscribing to same channel returns existing subscription."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -506,7 +506,7 @@ class TestMultiplexConnectionSubscriptions:
     async def test_subscribe_not_connected(self) -> None:
         """Test subscribing when not connected raises."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         with pytest.raises(InvalidStateError) as exc_info:
             await mux.subscribe("btcusdt@trade")
@@ -520,7 +520,7 @@ class TestMultiplexConnectionSubscriptions:
             channel_extractor=lambda msg: msg.get("stream"),
             unsubscribe_message=lambda ch: {"method": "UNSUBSCRIBE", "params": [ch]},
         )
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -542,7 +542,7 @@ class TestMultiplexConnectionSubscriptions:
     async def test_unsubscribe_not_subscribed(self) -> None:
         """Test unsubscribing from unsubscribed channel."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -559,7 +559,7 @@ class TestMultiplexConnectionSubscriptions:
     async def test_get_subscription(self) -> None:
         """Test getting subscription by channel."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -577,7 +577,7 @@ class TestMultiplexConnectionSubscriptions:
     async def test_get_subscription_not_found(self) -> None:
         """Test getting non-existent subscription."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         assert mux.get_subscription("btcusdt@trade") is None
 
@@ -585,7 +585,7 @@ class TestMultiplexConnectionSubscriptions:
     async def test_list_subscriptions(self) -> None:
         """Test listing subscriptions."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -606,7 +606,7 @@ class TestMultiplexConnectionSubscriptions:
     async def test_list_subscriptions_excludes_inactive(self) -> None:
         """Test listing subscriptions excludes inactive."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -625,14 +625,14 @@ class TestMultiplexConnectionSubscriptions:
             assert "ethusdt@trade" not in channels
 
 
-class TestMultiplexConnectionStats:
+class TestMultiplexStats:
     """Tests for stats."""
 
     @pytest.mark.asyncio
     async def test_stats_not_connected(self) -> None:
         """Test stats when not connected."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         stats = mux.stats()
 
@@ -646,7 +646,7 @@ class TestMultiplexConnectionStats:
     async def test_stats_with_subscriptions(self) -> None:
         """Test stats with subscriptions."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True
@@ -684,14 +684,14 @@ class TestMultiplexConnectionStats:
             assert stats.connection_stats.state == ConnectionState.CONNECTED
 
 
-class TestMultiplexConnectionRouting:
+class TestMultiplexRouting:
     """Tests for message routing."""
 
     @pytest.mark.asyncio
     async def test_message_routing(self) -> None:
         """Test message routing to subscriptions."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         # Create a mock manager with async iterator
         messages = [
@@ -737,7 +737,7 @@ class TestMultiplexConnectionRouting:
     async def test_unroutable_messages(self) -> None:
         """Test unroutable messages are counted."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         # Message with no channel
         messages = [
@@ -780,7 +780,7 @@ class TestMultiplexConnectionRouting:
             channel_extractor=lambda msg: msg.get("stream"),
             queue_size=2,
         )
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         messages = [
             {"stream": "btcusdt@trade", "seq": 1},
@@ -825,7 +825,7 @@ class TestMultiplexConnectionRouting:
     async def test_close_signals_subscriptions(self) -> None:
         """Test that close signals all subscriptions."""
         config = MultiplexConfig(channel_extractor=lambda msg: msg.get("stream"))
-        mux = MultiplexConnection("wss://example.com/ws", config)
+        mux = Multiplex("wss://example.com/ws", config)
 
         mock_manager = AsyncMock()
         mock_manager.is_connected = True

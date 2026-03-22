@@ -1043,7 +1043,3 @@ class WebSocket(Generic[T]):
     def buffer_fill_ratio(self) -> float:
         """Get the buffer fill ratio (0.0 to 1.0), or 0.0 if no buffer."""
         return self._buffer.fill_ratio if self._buffer else 0.0
-
-
-# Backward compatibility alias
-WebSocketManager = WebSocket

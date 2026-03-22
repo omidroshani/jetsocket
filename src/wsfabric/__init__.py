@@ -35,15 +35,11 @@ __all__ = [
     "HeartbeatConfig",
     "InvalidStateError",
     "Multiplex",
-    "MultiplexConnection",
     "ProtocolError",
     "SyncWebSocket",
-    "SyncWebSocketClient",
     "TimeoutError",
-    "TypedWebSocket",
     "WSFabricError",
     "WebSocket",
-    "WebSocketManager",
     "connect",
 ]
 
@@ -88,12 +84,6 @@ _lazy_imports: dict[str, str] = {
     "ReplayConfig": "wsfabric.buffer",
     "Subscription": "wsfabric.multiplex",
     "SubscriptionStats": "wsfabric.multiplex",
-    # Backward compatibility aliases
-    "MultiplexConnection": "wsfabric.multiplex",
-    "Presets": "wsfabric.presets",
-    "SyncWebSocketClient": "wsfabric.sync_client",
-    "TypedWebSocket": "wsfabric.typed",
-    "WebSocketManager": "wsfabric.manager",
 }
 
 

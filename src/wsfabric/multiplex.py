@@ -586,7 +586,3 @@ class Multiplex(Generic[T]):
             f"Multiplex(uri={self._uri!r}, "
             f"state={self.state.value}, subscriptions={active})"
         )
-
-
-# Backward compatibility alias
-MultiplexConnection = Multiplex
