@@ -176,7 +176,7 @@ impl FrameParser {
     ///     fin: Whether this is the final fragment
     #[pyo3(signature = (opcode, payload, mask=true, fin=true, rsv1=false))]
     pub fn encode<'py>(
-        &self,
+        &mut self,
         py: Python<'py>,
         opcode: u8,
         payload: &[u8],
@@ -185,23 +185,37 @@ impl FrameParser {
         rsv1: bool,
     ) -> PyResult<Bound<'py, PyBytes>> {
         let opcode = Opcode::from_u8(opcode)?;
-        let frame = self.encode_frame(opcode, payload, mask, fin, rsv1)?;
-        Ok(PyBytes::new_bound(py, &frame))
+        let total_size = Self::compute_frame_size(payload.len(), mask);
+
+        // Zero-copy: write frame directly into Python bytes allocation
+        PyBytes::new_bound_with(py, total_size, |buf| {
+            Self::write_frame_into(buf, opcode, payload, mask, fin, rsv1);
+            Ok(())
+        })
     }
 
     /// Build a close frame with code and reason.
     #[pyo3(signature = (code=1000, reason="", mask=true))]
     pub fn encode_close<'py>(
-        &self,
+        &mut self,
         py: Python<'py>,
         code: u16,
         reason: &str,
         mask: bool,
     ) -> PyResult<Bound<'py, PyBytes>> {
-        let mut payload = code.to_be_bytes().to_vec();
-        payload.extend_from_slice(reason.as_bytes());
-        let frame = self.encode_frame(Opcode::Close, &payload, mask, true, false)?;
-        Ok(PyBytes::new_bound(py, &frame))
+        // Build close payload: 2-byte code + reason
+        let reason_bytes = reason.as_bytes();
+        let close_payload_len = 2 + reason_bytes.len();
+        let total_size = Self::compute_frame_size(close_payload_len, mask);
+
+        PyBytes::new_bound_with(py, total_size, |buf| {
+            // Assemble close payload inline
+            let mut close_payload = Vec::with_capacity(close_payload_len);
+            close_payload.extend_from_slice(&code.to_be_bytes());
+            close_payload.extend_from_slice(reason_bytes);
+            Self::write_frame_into(buf, Opcode::Close, &close_payload, mask, true, false);
+            Ok(())
+        })
     }
 
     /// Reset parser state (for reconnection).
@@ -328,18 +342,9 @@ impl FrameParser {
         }
     }
 
-    /// Encode a frame for sending.
-    fn encode_frame(
-        &self,
-        opcode: Opcode,
-        payload: &[u8],
-        mask: bool,
-        fin: bool,
-        rsv1: bool,
-    ) -> Result<Vec<u8>, ProtocolError> {
-        let payload_len = payload.len();
-
-        // Calculate frame size
+    /// Compute the total encoded frame size.
+    #[inline]
+    fn compute_frame_size(payload_len: usize, mask: bool) -> usize {
         let len_bytes = if payload_len <= 125 {
             1
         } else if payload_len <= 65535 {
@@ -348,41 +353,57 @@ impl FrameParser {
             9
         };
         let mask_size = if mask { 4 } else { 0 };
-        let header_size = 1 + len_bytes + mask_size;
+        1 + len_bytes + mask_size + payload_len
+    }
 
-        let mut frame = Vec::with_capacity(header_size + payload_len);
+    /// Write a complete frame into a pre-allocated buffer.
+    /// Buffer must be exactly `compute_frame_size()` bytes.
+    fn write_frame_into(
+        buf: &mut [u8],
+        opcode: Opcode,
+        payload: &[u8],
+        mask: bool,
+        fin: bool,
+        rsv1: bool,
+    ) {
+        let payload_len = payload.len();
+        let mut pos = 0;
 
         // First byte: FIN + RSV1 + opcode
         let mut first_byte = if fin { 0x80 } else { 0x00 } | (opcode as u8);
         if rsv1 {
             first_byte |= 0x40;
         }
-        frame.push(first_byte);
+        buf[pos] = first_byte;
+        pos += 1;
 
         // Second byte and extended length
         let mask_bit = if mask { 0x80 } else { 0x00 };
         if payload_len <= 125 {
-            frame.push(mask_bit | (payload_len as u8));
+            buf[pos] = mask_bit | (payload_len as u8);
+            pos += 1;
         } else if payload_len <= 65535 {
-            frame.push(mask_bit | 126);
-            frame.extend_from_slice(&(payload_len as u16).to_be_bytes());
+            buf[pos] = mask_bit | 126;
+            pos += 1;
+            buf[pos..pos + 2].copy_from_slice(&(payload_len as u16).to_be_bytes());
+            pos += 2;
         } else {
-            frame.push(mask_bit | 127);
-            frame.extend_from_slice(&(payload_len as u64).to_be_bytes());
+            buf[pos] = mask_bit | 127;
+            pos += 1;
+            buf[pos..pos + 8].copy_from_slice(&(payload_len as u64).to_be_bytes());
+            pos += 8;
         }
 
         // Mask key and payload
         if mask {
             let mask_key = generate_mask();
-            frame.extend_from_slice(&mask_key);
-            let mut masked_payload = payload.to_vec();
-            apply_mask_inplace(&mut masked_payload, mask_key);
-            frame.extend_from_slice(&masked_payload);
+            buf[pos..pos + 4].copy_from_slice(&mask_key);
+            pos += 4;
+            buf[pos..pos + payload_len].copy_from_slice(payload);
+            apply_mask_inplace(&mut buf[pos..pos + payload_len], mask_key);
         } else {
-            frame.extend_from_slice(payload);
+            buf[pos..pos + payload_len].copy_from_slice(payload);
         }
-
-        Ok(frame)
     }
 }
 

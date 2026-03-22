@@ -16,7 +16,7 @@ pyo3 = { version = "0.22", features = ["extension-module"] }
 flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
 base64 = "0.22"
 sha1 = "0.10"
-rand = "0.8"
+fastrand = "2"
 thiserror = "2.0"
 simdutf8 = "0.1"
 

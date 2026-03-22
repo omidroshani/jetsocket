@@ -19,7 +19,7 @@ const WS_GUID: &str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 /// Returns a base64-encoded 16-byte random value.
 #[pyfunction]
 pub fn generate_key() -> String {
-    let random_bytes: [u8; 16] = rand::random();
+    let random_bytes: [u8; 16] = fastrand::u128(..).to_ne_bytes();
     BASE64.encode(random_bytes)
 }
 

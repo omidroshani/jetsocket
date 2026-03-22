@@ -163,7 +163,7 @@ fn apply_mask_scalar(data: &mut [u8], mask: [u8; 4]) {
 /// Generate a random 4-byte masking key.
 #[inline]
 pub fn generate_mask() -> [u8; 4] {
-    rand::random()
+    fastrand::u32(..).to_ne_bytes()
 }
 
 #[cfg(test)]
