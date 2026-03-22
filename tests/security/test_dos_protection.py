@@ -5,11 +5,6 @@ from __future__ import annotations
 import pytest
 
 from jetsocket._core import Deflater, FrameParser, RingBuffer
-from jetsocket._core import (  
-        Deflater,
-        FrameParser,
-        RingBuffer,
-    )
 
 
 @pytest.mark.security

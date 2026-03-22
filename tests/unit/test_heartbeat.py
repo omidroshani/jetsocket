@@ -58,10 +58,10 @@ class TestHeartbeatConfig:
 
     def test_timeout_must_be_less_than_interval(self) -> None:
         """Test that timeout < interval."""
-        with pytest.raises(ValueError, match="timeout.*must be less than interval"):
+        with pytest.raises(ValueError, match=r"timeout.*must be less than interval"):
             HeartbeatConfig(interval=5.0, timeout=5.0)
 
-        with pytest.raises(ValueError, match="timeout.*must be less than interval"):
+        with pytest.raises(ValueError, match=r"timeout.*must be less than interval"):
             HeartbeatConfig(interval=5.0, timeout=10.0)
 
     def test_cannot_use_both_ws_ping_and_application_ping(self) -> None:

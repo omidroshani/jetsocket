@@ -7,10 +7,8 @@ import tracemalloc
 
 import pytest
 
-from jetsocket.transport import AsyncTransport, BaseTransportConfig
-
 from jetsocket._core import Deflater, RingBuffer
-from jetsocket._core import Deflater, RingBuffer  
+from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
 
 def _get_memory() -> int:

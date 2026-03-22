@@ -10,9 +10,9 @@ from jetsocket.exceptions import (
     ConnectionError,
     HandshakeError,
     InvalidStateError,
+    JetSocketError,
     ProtocolError,
     TimeoutError,
-    JetSocketError,
 )
 
 

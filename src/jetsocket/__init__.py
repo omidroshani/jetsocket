@@ -34,11 +34,11 @@ __all__ = [
     "HandshakeError",
     "HeartbeatConfig",
     "InvalidStateError",
+    "JetSocketError",
     "Multiplex",
     "ProtocolError",
     "SyncWebSocket",
     "TimeoutError",
-    "JetSocketError",
     "WebSocket",
     "connect",
 ]
@@ -48,9 +48,9 @@ from jetsocket.exceptions import (
     ConnectionError,
     HandshakeError,
     InvalidStateError,
+    JetSocketError,
     ProtocolError,
     TimeoutError,
-    JetSocketError,
 )
 from jetsocket.state import ConnectionState
 

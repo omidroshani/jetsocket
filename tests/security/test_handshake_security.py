@@ -7,11 +7,6 @@ import base64
 import pytest
 
 from jetsocket._core import Handshake, generate_key, validate_accept
-from jetsocket._core import (  
-        Handshake,
-        generate_key,
-        validate_accept,
-    )
 
 
 @pytest.mark.security

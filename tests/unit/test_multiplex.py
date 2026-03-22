@@ -10,8 +10,8 @@ import pytest
 
 from jetsocket.exceptions import InvalidStateError, TimeoutError
 from jetsocket.multiplex import (
-    MultiplexConfig,
     Multiplex,
+    MultiplexConfig,
     MultiplexStats,
     Subscription,
     SubscriptionStats,
@@ -625,7 +625,7 @@ class TestMultiplexSubscriptions:
             assert "ethusdt@trade" not in channels
 
 
-class TestMultiplexStats:
+class TestMultiplexConnectionStats:
     """Tests for stats."""
 
     @pytest.mark.asyncio

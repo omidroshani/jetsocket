@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, Any
 from jetsocket.exceptions import (
     ConnectionError,
     HandshakeError,
-    ProtocolError,
     TimeoutError,
 )
 from jetsocket.transport.base import (
@@ -33,7 +32,12 @@ if TYPE_CHECKING:
 # Type alias for resolved addresses
 ResolvedAddress = tuple[socket.AddressFamily, str]
 
-from jetsocket._core import Deflater, FrameParser, Handshake, parse_deflate_params
+from jetsocket._core import (  # noqa: E402
+    Deflater,
+    FrameParser,
+    Handshake,
+    parse_deflate_params,
+)
 
 # Sentinel for connection lost
 _CONNECTION_LOST = object()
@@ -77,17 +81,14 @@ class _WSProtocol(asyncio.Protocol):
         if sock is not None:
             import socket as _socket  # noqa: PLC0415
 
-            try:
+            with contextlib.suppress(OSError):
                 sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)
-            except OSError:
-                pass
 
     def data_received(self, data: bytes) -> None:
         """Called when data is received from the network."""
         if not self._handshake_done:
             self._handshake_buffer.extend(data)
-            if b"\r\n\r\n" in self._handshake_buffer:
-                if self._handshake_future is not None and not self._handshake_future.done():
+            if b"\r\n\r\n" in self._handshake_buffer and self._handshake_future is not None and not self._handshake_future.done():
                     self._handshake_future.set_result(bytes(self._handshake_buffer))
             return
 
@@ -108,16 +109,13 @@ class _WSProtocol(asyncio.Protocol):
                 if self.parser is not None and self.transport is not None:
                     pong = self.parser.encode(0xA, frame.payload, True, True)
                     self.transport.write(pong)
-            elif opcode == 0x8:  # CLOSE
-                self._frames.append(frame)
-                self._frame_ready.set()
-            elif opcode == 0xA:  # PONG
+            elif opcode in {8, 10}:  # CLOSE
                 self._frames.append(frame)
                 self._frame_ready.set()
             else:  # DATA frames
                 if frame.rsv1 and self.deflater is not None:
                     decompressed = self.deflater.decompress(frame.payload)
-                    frame = Frame(
+                    frame = Frame(  # noqa: PLW2901
                         opcode=Opcode(int(frame.opcode)),
                         payload=decompressed,
                         fin=frame.fin,

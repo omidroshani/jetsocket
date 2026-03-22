@@ -7,21 +7,18 @@ the manager end-to-end including reconnection and heartbeat.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from typing import TYPE_CHECKING, Any
 
 import pytest
 import websockets.server
 from websockets.frames import CloseCode as WsCloseCode
 
-from jetsocket.backoff import BackoffConfig
 from jetsocket.events import (
     ClosedEvent,
     ConnectedEvent,
     ConnectingEvent,
-    DisconnectedEvent,
     MessageEvent,
-    ReconnectedEvent,
-    ReconnectingEvent,
 )
 from jetsocket.manager import WebSocket
 from jetsocket.state import ConnectionState
@@ -189,10 +186,8 @@ class TestManagerMessaging:
         await ws.send({"test": "data"})
 
         # Wait for message to be processed
-        try:
+        with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(received_event.wait(), timeout=2.0)
-        except asyncio.TimeoutError:
-            pass
 
         await ws.close()
 
@@ -218,10 +213,8 @@ class TestManagerMessaging:
         await ws.send({"test": "data"})
 
         # Wait for response
-        try:
+        with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(received_event.wait(), timeout=2.0)
-        except asyncio.TimeoutError:
-            pass
 
         stats_after = ws.stats()
         await ws.close()

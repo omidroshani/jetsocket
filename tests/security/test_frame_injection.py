@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from jetsocket._core import FrameParser
-from jetsocket._core import FrameParser  
 
 
 @pytest.mark.security

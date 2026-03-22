@@ -94,7 +94,7 @@ class ReplayConfig:
             raise ValueError(msg)
 
 
-from jetsocket._core import RingBuffer as _CythonRingBuffer
+from jetsocket._core import RingBuffer as _CythonRingBuffer  # noqa: E402
 
 _CYTHON_AVAILABLE = True
 

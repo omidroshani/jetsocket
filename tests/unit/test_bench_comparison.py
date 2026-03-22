@@ -124,7 +124,7 @@ def test_websocket_client_connect(benchmark: Any, echo_server: str) -> None:
 @pytest.mark.benchmark(group="connect")
 def test_picows_connect(benchmark: Any, echo_server: str) -> None:
     """picows connection time."""
-    from picows import WSFrame, WSListener, WSMsgType, ws_connect
+    from picows import WSListener, ws_connect
 
     class Listener(WSListener):
         pass
@@ -149,9 +149,8 @@ def test_aiohttp_connect(benchmark: Any, echo_server: str) -> None:
     loop = _new_loop()
 
     async def run() -> None:
-        async with aiohttp.ClientSession() as session:
-            async with session.ws_connect(echo_server) as ws:
-                await ws.close()
+        async with aiohttp.ClientSession() as session, session.ws_connect(echo_server) as ws:
+            await ws.close()
 
     try:
         benchmark(lambda: loop.run_until_complete(run()))
@@ -231,7 +230,7 @@ def test_picows_rt_small(benchmark: Any, echo_server: str) -> None:
             received.set()
 
     loop = _new_loop()
-    transport_pw, listener = loop.run_until_complete(
+    transport_pw, _listener = loop.run_until_complete(
         ws_connect(Listener, echo_server)
     )
 
@@ -345,7 +344,7 @@ def test_picows_rt_large(benchmark: Any, echo_server: str) -> None:
             received.set()
 
     loop = _new_loop()
-    transport_pw, listener = loop.run_until_complete(
+    transport_pw, _listener = loop.run_until_complete(
         ws_connect(Listener, echo_server)
     )
 
@@ -466,7 +465,7 @@ def test_picows_throughput(benchmark: Any, echo_server: str) -> None:
                 done.set()
 
     loop = _new_loop()
-    transport_pw, listener = loop.run_until_complete(
+    transport_pw, _listener = loop.run_until_complete(
         ws_connect(Listener, echo_server)
     )
 

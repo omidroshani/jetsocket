@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -12,7 +13,6 @@ from jetsocket.backoff import BackoffConfig
 from jetsocket.events import (
     ConnectedEvent,
     ConnectingEvent,
-    DisconnectedEvent,
     ErrorEvent,
     MessageEvent,
     StateChangeEvent,
@@ -241,8 +241,7 @@ class TestWebSocketWithMockedTransport:
         mock_transport = AsyncMock()
         mock_transport.connect.side_effect = ConnectionError("Failed")
 
-        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport):
-            with pytest.raises(ConnectionError):
+        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport), pytest.raises(ConnectionError):
                 await ws.connect()
 
         assert ws.state == ConnectionState.FAILED
@@ -493,11 +492,11 @@ class TestWebSocketReconnect:
                 ws._state = ConnectionState.CONNECTED
                 ws._running = False  # Stop the loop
 
-        with patch.object(ws, "_connect_internal", side_effect=mock_connect_internal):
-            try:
-                await ws._schedule_reconnect()
-            except ConnectionError:
-                pass  # Expected on first attempt
+        with (
+            patch.object(ws, "_connect_internal", side_effect=mock_connect_internal),
+            contextlib.suppress(ConnectionError),
+        ):
+            await ws._schedule_reconnect()
 
         assert "reconnecting:1" in events_received
         assert "state:reconnecting" in events_received
