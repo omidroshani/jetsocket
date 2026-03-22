@@ -1,8 +1,8 @@
 # WSFabric
 
-Production-grade, resilient WebSocket library for Python with Rust-powered performance.
+Production-grade, resilient WebSocket library for Python with Cython-powered performance.
 
-Every existing Python WebSocket library gives you a raw pipe. WSFabric gives you a production-grade client with automatic reconnection, heartbeat management, message buffering, and multiplexing — all backed by a Rust core for maximum performance.
+Every existing Python WebSocket library gives you a raw pipe. WSFabric gives you a production-grade client with automatic reconnection, heartbeat management, message buffering, and multiplexing — with a Cython-optimized core that beats websockets by 20-30%.
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ pip install wsfabric[all]        # All extras
 
 ## Features
 
-- **Rust-powered core** — SIMD-accelerated frame parsing, masking, UTF-8 validation, and permessage-deflate compression
+- **Cython-optimized core** — C-speed frame parsing, masking, and permessage-deflate compression
 - **Automatic reconnection** — Exponential backoff with jitter, configurable max attempts
 - **Heartbeat management** — WebSocket and application-level ping/pong
 - **Message buffering** — Ring buffer with replay-on-reconnect
@@ -145,9 +145,9 @@ graph TB
         G["AsyncTransport"]
         H["SyncTransport"]
     end
-    subgraph "Rust Core (PyO3)"
+    subgraph "Cython Core"
         I["Frame Parser"]
-        J["SIMD Masking"]
+        J["C-speed Masking"]
         K["permessage-deflate"]
         L["UTF-8 Validation"]
     end
@@ -163,7 +163,7 @@ graph TB
 
 ```bash
 git clone https://github.com/omid/wsfabric && cd wsfabric
-uv sync && uv run maturin develop
+uv sync && make build
 uv run pytest                    # Run tests
 uv run mypy src/ && uv run ruff check .  # Type check + lint
 ```

@@ -15,7 +15,7 @@
 ### 2. Frame Masking — PASS
 
 - `FrameParser.encode()` defaults to `mask=True` (client-to-server masking per RFC 6455)
-- Mask keys are generated via `rand::random()` (Rust) or `os.urandom()` (Python fallback)
+- Mask keys are generated via `os.urandom()` (cryptographic randomness)
 - Mask keys are verified to be unique across frames (not deterministic)
 
 ### 3. Input Validation — PASS

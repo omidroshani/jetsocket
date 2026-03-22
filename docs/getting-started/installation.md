@@ -3,7 +3,7 @@
 ## Requirements
 
 - Python 3.9 or higher
-- No required dependencies (pure Python with optional Rust extensions)
+- No required dependencies (Cython-optimized C extension included)
 
 ## Install from PyPI
 
@@ -54,4 +54,4 @@ WSFabric supports:
 - macOS (x86_64, arm64)
 - Windows (x86_64)
 
-The Rust core is precompiled for these platforms. On other platforms, a pure-Python fallback is used automatically.
+Precompiled wheels are available for these platforms. On other platforms, a C compiler is needed to build from source.

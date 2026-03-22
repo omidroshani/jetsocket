@@ -1,7 +1,7 @@
 """WSFabric — Production-grade, resilient WebSocket library for Python.
 
 WSFabric provides a high-performance, memory-efficient WebSocket client with:
-- Rust-powered frame parsing and compression
+- Cython-optimized frame parsing and compression
 - Automatic reconnection with exponential backoff
 - Heartbeat management (ping/pong)
 - Message buffering with replay-on-reconnect

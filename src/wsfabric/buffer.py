@@ -237,7 +237,7 @@ class _PythonRingBuffer(Generic[T]):
 class MessageBuffer(Generic[T]):
     """High-level message buffer with sequence tracking and deduplication.
 
-    This class wraps the Rust RingBuffer (or Python fallback) and adds:
+    This class wraps the Cython RingBuffer and adds:
     - Sequence ID tracking for replay
     - Deduplication based on sequence IDs
     - Statistics and fill ratio monitoring

@@ -1,4 +1,4 @@
-"""Type stubs for the Rust _core extension module."""
+"""Type stubs for the Cython _core extension module."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ class Frame:
     def as_text(self) -> str: ...
 
 class FrameParser:
-    """WebSocket frame parser implemented in Rust."""
+    """WebSocket frame parser implemented in Cython."""
 
     def __init__(
         self,
@@ -73,7 +73,7 @@ class HandshakeResult:
     def extensions(self) -> list[str]: ...
 
 class Handshake:
-    """WebSocket handshake handler implemented in Rust."""
+    """WebSocket handshake handler."""
 
     def __init__(
         self,
@@ -157,7 +157,7 @@ def validate_accept(key: str, accept: str) -> bool:
     """Validate the Sec-WebSocket-Accept header value."""
 
 def validate_utf8(data: bytes) -> bool:
-    """SIMD-accelerated UTF-8 validation."""
+    """UTF-8 validation."""
 
 def parse_deflate_params(
     extension_str: str,

@@ -4,7 +4,7 @@
 
 WSFabric provides a high-performance, memory-efficient WebSocket client with:
 
-- **Rust-powered core** for frame parsing and compression
+- **Cython-optimized core** for frame parsing and compression
 - **Automatic reconnection** with exponential backoff and jitter
 - **Heartbeat management** (ping/pong)
 - **Message buffering** with replay-on-reconnect

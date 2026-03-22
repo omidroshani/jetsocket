@@ -33,5 +33,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic reconnection with exponential backoff
 - Heartbeat management (ping/pong)
 - Event-driven architecture
-- Rust-powered frame parsing via PyO3
+- Cython-optimized frame parsing
 - Comprehensive exception hierarchy

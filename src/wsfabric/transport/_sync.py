@@ -309,7 +309,7 @@ class SyncTransport(AbstractTransport):
             data = self._deflater.compress(data)
             rsv1 = True
 
-        # Encode and send frame (pass opcode as int for Rust compatibility)
+        # Encode and send frame (pass opcode as int)
         frame_data = self._parser.encode(int(opcode), data, True, True, rsv1=rsv1)
         with self._write_lock:
             self._send_all(frame_data)
