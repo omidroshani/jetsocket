@@ -29,6 +29,9 @@ wheels/
 venv/
 ENV/
 
+# Documentation build output
+site/
+
 # Testing
 .pytest_cache/
 .coverage
