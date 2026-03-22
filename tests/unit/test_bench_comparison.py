@@ -149,7 +149,10 @@ def test_aiohttp_connect(benchmark: Any, echo_server: str) -> None:
     loop = _new_loop()
 
     async def run() -> None:
-        async with aiohttp.ClientSession() as session, session.ws_connect(echo_server) as ws:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.ws_connect(echo_server) as ws,
+        ):
             await ws.close()
 
     try:
@@ -230,9 +233,7 @@ def test_picows_rt_small(benchmark: Any, echo_server: str) -> None:
             received.set()
 
     loop = _new_loop()
-    transport_pw, _listener = loop.run_until_complete(
-        ws_connect(Listener, echo_server)
-    )
+    transport_pw, _listener = loop.run_until_complete(ws_connect(Listener, echo_server))
 
     async def rt() -> None:
         received.clear()
@@ -344,9 +345,7 @@ def test_picows_rt_large(benchmark: Any, echo_server: str) -> None:
             received.set()
 
     loop = _new_loop()
-    transport_pw, _listener = loop.run_until_complete(
-        ws_connect(Listener, echo_server)
-    )
+    transport_pw, _listener = loop.run_until_complete(ws_connect(Listener, echo_server))
 
     async def rt() -> None:
         received.clear()
@@ -465,9 +464,7 @@ def test_picows_throughput(benchmark: Any, echo_server: str) -> None:
                 done.set()
 
     loop = _new_loop()
-    transport_pw, _listener = loop.run_until_complete(
-        ws_connect(Listener, echo_server)
-    )
+    transport_pw, _listener = loop.run_until_complete(ws_connect(Listener, echo_server))
 
     async def burst() -> None:
         nonlocal count

@@ -88,8 +88,12 @@ class _WSProtocol(asyncio.Protocol):
         """Called when data is received from the network."""
         if not self._handshake_done:
             self._handshake_buffer.extend(data)
-            if b"\r\n\r\n" in self._handshake_buffer and self._handshake_future is not None and not self._handshake_future.done():
-                    self._handshake_future.set_result(bytes(self._handshake_buffer))
+            if (
+                b"\r\n\r\n" in self._handshake_buffer
+                and self._handshake_future is not None
+                and not self._handshake_future.done()
+            ):
+                self._handshake_future.set_result(bytes(self._handshake_buffer))
             return
 
         if self.parser is None:
@@ -196,7 +200,8 @@ class AsyncTransport(AbstractTransport):
             infos = await loop.run_in_executor(
                 None,
                 lambda: socket.getaddrinfo(
-                    host, port,
+                    host,
+                    port,
                     family=socket.AF_UNSPEC,
                     type=socket.SOCK_STREAM,
                 ),
@@ -363,7 +368,11 @@ class AsyncTransport(AbstractTransport):
 
     async def _perform_handshake(self) -> None:
         """Perform the WebSocket opening handshake."""
-        if self._uri is None or self._protocol is None or self._asyncio_transport is None:
+        if (
+            self._uri is None
+            or self._protocol is None
+            or self._asyncio_transport is None
+        ):
             msg = "Transport not initialized"
             raise ConnectionError(msg)
 
@@ -429,7 +438,11 @@ class AsyncTransport(AbstractTransport):
         No locks, no drain(). Writes directly to the transport.
         Backpressure is handled via pause_writing/resume_writing callbacks.
         """
-        if not self._connected or self._parser is None or self._asyncio_transport is None:
+        if (
+            not self._connected
+            or self._parser is None
+            or self._asyncio_transport is None
+        ):
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 
@@ -460,7 +473,11 @@ class AsyncTransport(AbstractTransport):
 
     async def send_frame(self, frame: Frame) -> None:
         """Send a pre-built frame."""
-        if not self._connected or self._parser is None or self._asyncio_transport is None:
+        if (
+            not self._connected
+            or self._parser is None
+            or self._asyncio_transport is None
+        ):
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 
@@ -560,7 +577,11 @@ class AsyncTransport(AbstractTransport):
             msg = "Ping payload must be 125 bytes or less"
             raise ValueError(msg)
 
-        if not self._connected or self._parser is None or self._asyncio_transport is None:
+        if (
+            not self._connected
+            or self._parser is None
+            or self._asyncio_transport is None
+        ):
             msg = "Transport is not connected"
             raise ConnectionError(msg)
 

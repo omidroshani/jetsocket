@@ -143,9 +143,7 @@ class TestTypedWebSocketWithPydantic:
         class TestMsg(BaseModel):
             value: int
 
-        deserializer, _error_count = create_typed_deserializer(
-            TestMsg, strict=True
-        )
+        deserializer, _error_count = create_typed_deserializer(TestMsg, strict=True)
         with pytest.raises(ValidationError):
             deserializer(b'{"value": "not_an_int"}')
 
@@ -159,9 +157,7 @@ class TestTypedWebSocketWithPydantic:
         class TestMsg(BaseModel):
             value: int
 
-        deserializer, error_count = create_typed_deserializer(
-            TestMsg, strict=False
-        )
+        deserializer, error_count = create_typed_deserializer(TestMsg, strict=False)
         result = deserializer(b'{"value": "not_an_int"}')
         assert result is None
         assert error_count() == 1

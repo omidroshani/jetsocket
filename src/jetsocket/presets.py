@@ -37,13 +37,19 @@ def trading(uri: str, **overrides: Any) -> WebSocket[Any]:
     defaults: dict[str, Any] = {
         "reconnect": True,
         "backoff": BackoffConfig(
-            base=0.5, multiplier=2.0, cap=30.0, jitter=True,
-            max_attempts=0, reset_after=60.0,
+            base=0.5,
+            multiplier=2.0,
+            cap=30.0,
+            jitter=True,
+            max_attempts=0,
+            reset_after=60.0,
         ),
         "heartbeat": HeartbeatConfig(interval=20.0, timeout=10.0),
         "buffer": BufferConfig(
-            capacity=10_000, overflow_policy="drop_oldest",
-            enable_dedup=True, dedup_window=1000,
+            capacity=10_000,
+            overflow_policy="drop_oldest",
+            enable_dedup=True,
+            dedup_window=1000,
         ),
         "max_connection_age": 85800.0,
         "compress": True,
@@ -72,8 +78,12 @@ def llm_stream(uri: str, **overrides: Any) -> WebSocket[Any]:
     defaults: dict[str, Any] = {
         "reconnect": True,
         "backoff": BackoffConfig(
-            base=1.0, multiplier=2.0, cap=10.0, jitter=True,
-            max_attempts=5, reset_after=30.0,
+            base=1.0,
+            multiplier=2.0,
+            cap=10.0,
+            jitter=True,
+            max_attempts=5,
+            reset_after=30.0,
         ),
         "heartbeat": HeartbeatConfig(interval=30.0, timeout=15.0),
         "buffer": BufferConfig(capacity=500, overflow_policy="drop_oldest"),
@@ -103,8 +113,12 @@ def dashboard(uri: str, **overrides: Any) -> WebSocket[Any]:
     defaults: dict[str, Any] = {
         "reconnect": True,
         "backoff": BackoffConfig(
-            base=2.0, multiplier=2.0, cap=60.0, jitter=True,
-            max_attempts=0, reset_after=120.0,
+            base=2.0,
+            multiplier=2.0,
+            cap=60.0,
+            jitter=True,
+            max_attempts=0,
+            reset_after=120.0,
         ),
         "heartbeat": HeartbeatConfig(interval=30.0, timeout=20.0),
         "buffer": BufferConfig(capacity=100, overflow_policy="drop_oldest"),
@@ -131,8 +145,12 @@ def minimal(uri: str, **overrides: Any) -> WebSocket[Any]:
     defaults: dict[str, Any] = {
         "reconnect": True,
         "backoff": BackoffConfig(
-            base=1.0, multiplier=2.0, cap=30.0, jitter=True,
-            max_attempts=10, reset_after=60.0,
+            base=1.0,
+            multiplier=2.0,
+            cap=30.0,
+            jitter=True,
+            max_attempts=10,
+            reset_after=60.0,
         ),
         "heartbeat": None,
         "buffer": None,

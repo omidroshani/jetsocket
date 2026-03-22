@@ -235,9 +235,7 @@ class Multiplex(Generic[T]):
         ...         "params": [ch],
         ...     },
         ... )
-        >>> async with Multiplex(
-        ...     "wss://stream.binance.com/ws", config
-        ... ) as mux:
+        >>> async with Multiplex("wss://stream.binance.com/ws", config) as mux:
         ...     btc = await mux.subscribe("btcusdt@trade")
         ...     eth = await mux.subscribe("ethusdt@trade")
         ...     async for msg in btc:
@@ -288,9 +286,9 @@ class Multiplex(Generic[T]):
             )
         elif channel_key is not None:
             self._config = MultiplexConfig(
-                channel_extractor=lambda msg, _k=channel_key: msg.get(_k)
-                if isinstance(msg, dict)
-                else None,
+                channel_extractor=lambda msg, _k=channel_key: (
+                    msg.get(_k) if isinstance(msg, dict) else None
+                ),
                 subscribe_message=subscribe_msg,
                 unsubscribe_message=unsubscribe_msg,
                 queue_size=queue_size,

@@ -47,9 +47,9 @@ class TestBinanceWebSocket:
             data = json.loads(frame.payload)
 
             expected_keys = {"e", "E", "s", "t", "p", "q", "T", "m", "M"}
-            assert expected_keys.issubset(
-                data.keys()
-            ), f"Missing keys: {expected_keys - data.keys()}"
+            assert expected_keys.issubset(data.keys()), (
+                f"Missing keys: {expected_keys - data.keys()}"
+            )
         finally:
             await transport.close()
 

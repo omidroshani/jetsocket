@@ -56,9 +56,9 @@ class TestAsyncTransportIO:
         transport = AsyncTransport(config)
         await transport.connect(live_server_url)
         try:
-            await transport.send(b"\xAA\xBB", binary=True)
+            await transport.send(b"\xaa\xbb", binary=True)
             frame = await transport.recv()
-            assert frame.payload == b"\xAA\xBB"
+            assert frame.payload == b"\xaa\xbb"
         finally:
             await transport.close()
 

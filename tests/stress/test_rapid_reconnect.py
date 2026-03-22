@@ -27,9 +27,7 @@ class TestRapidReconnect:
             assert frame.payload == f"test-{i}".encode()
             await transport.close()
 
-    async def test_reconnect_preserves_functionality(
-        self, echo_server: str
-    ) -> None:
+    async def test_reconnect_preserves_functionality(self, echo_server: str) -> None:
         """Verify each reconnection produces a fully working connection."""
         config = BaseTransportConfig(connect_timeout=5.0)
 

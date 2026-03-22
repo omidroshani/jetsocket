@@ -45,9 +45,7 @@ async def echo_server() -> AsyncIterator[str]:
         except websockets.exceptions.ConnectionClosed:
             pass
 
-    async with websockets.server.serve(
-        echo_handler, "127.0.0.1", TEST_PORT
-    ) as server:
+    async with websockets.server.serve(echo_handler, "127.0.0.1", TEST_PORT) as server:
         yield f"ws://127.0.0.1:{TEST_PORT}"
         server.close()
 
@@ -67,9 +65,7 @@ async def close_after_one_server() -> AsyncIterator[str]:
         except websockets.exceptions.ConnectionClosed:
             pass
 
-    async with websockets.server.serve(
-        handler, "127.0.0.1", TEST_PORT + 1
-    ) as server:
+    async with websockets.server.serve(handler, "127.0.0.1", TEST_PORT + 1) as server:
         yield f"ws://127.0.0.1:{TEST_PORT + 1}"
         server.close()
 
@@ -92,9 +88,7 @@ async def json_server() -> AsyncIterator[str]:
         except websockets.exceptions.ConnectionClosed:
             pass
 
-    async with websockets.server.serve(
-        handler, "127.0.0.1", TEST_PORT + 2
-    ) as server:
+    async with websockets.server.serve(handler, "127.0.0.1", TEST_PORT + 2) as server:
         yield f"ws://127.0.0.1:{TEST_PORT + 2}"
         server.close()
 
@@ -170,9 +164,7 @@ class TestManagerMessaging:
 
     async def test_message_events(self, json_server: str) -> None:
         """Test that messages emit events."""
-        ws: WebSocket[dict[str, Any]] = WebSocket(
-            json_server, compress=False
-        )
+        ws: WebSocket[dict[str, Any]] = WebSocket(json_server, compress=False)
 
         messages_received: list[dict[str, Any]] = []
         received_event = asyncio.Event()
@@ -195,9 +187,7 @@ class TestManagerMessaging:
 
     async def test_stats_updated(self, json_server: str) -> None:
         """Test that stats are updated after messages."""
-        ws: WebSocket[dict[str, Any]] = WebSocket(
-            json_server, compress=False
-        )
+        ws: WebSocket[dict[str, Any]] = WebSocket(json_server, compress=False)
 
         received_event = asyncio.Event()
 

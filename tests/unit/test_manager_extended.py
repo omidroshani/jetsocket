@@ -87,9 +87,7 @@ class TestManagerConfiguration:
 
     def test_with_heartbeat(self) -> None:
         """Test with heartbeat configured."""
-        ws = WebSocket(
-            "ws://example.com/ws", heartbeat=HeartbeatConfig(interval=20.0)
-        )
+        ws = WebSocket("ws://example.com/ws", heartbeat=HeartbeatConfig(interval=20.0))
         assert ws._heartbeat_config is not None
         assert ws._heartbeat_config.interval == 20.0
 

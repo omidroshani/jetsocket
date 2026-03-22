@@ -28,9 +28,7 @@ class TestBybitWebSocket:
         await transport.connect(BYBIT_WS)
         try:
             # Subscribe
-            sub = json.dumps(
-                {"op": "subscribe", "args": ["tickers.BTCUSDT"]}
-            )
+            sub = json.dumps({"op": "subscribe", "args": ["tickers.BTCUSDT"]})
             await transport.send(sub)
 
             # Read subscription confirmation + first data message

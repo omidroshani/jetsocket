@@ -241,8 +241,11 @@ class TestWebSocketWithMockedTransport:
         mock_transport = AsyncMock()
         mock_transport.connect.side_effect = ConnectionError("Failed")
 
-        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport), pytest.raises(ConnectionError):
-                await ws.connect()
+        with (
+            patch("jetsocket.manager.AsyncTransport", return_value=mock_transport),
+            pytest.raises(ConnectionError),
+        ):
+            await ws.connect()
 
         assert ws.state == ConnectionState.FAILED
         assert len(error_received) == 1

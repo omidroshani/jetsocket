@@ -31,9 +31,7 @@ def _run_server(started: threading.Event, stop: threading.Event) -> None:
             pass
 
     async def serve() -> None:
-        async with websockets.server.serve(
-            echo_handler, "127.0.0.1", LIVE_SERVER_PORT
-        ):
+        async with websockets.server.serve(echo_handler, "127.0.0.1", LIVE_SERVER_PORT):
             started.set()
             # Wait until stop is signaled
             while not stop.is_set():

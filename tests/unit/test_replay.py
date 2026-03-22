@@ -76,9 +76,7 @@ class TestWebSocketBuffer:
 
     def test_manager_without_buffer(self) -> None:
         """Test manager without buffer configuration."""
-        manager: WebSocket[dict[str, Any]] = WebSocket(
-            "ws://localhost:8080"
-        )
+        manager: WebSocket[dict[str, Any]] = WebSocket("ws://localhost:8080")
         assert manager.buffer is None
         assert manager.buffer_fill_ratio == 0.0
 
@@ -249,9 +247,7 @@ class TestReplayOnReconnect:
     @pytest.mark.asyncio
     async def test_replay_without_config(self) -> None:
         """Test replay with no replay configuration."""
-        manager: WebSocket[dict[str, Any]] = WebSocket(
-            "ws://localhost:8080"
-        )
+        manager: WebSocket[dict[str, Any]] = WebSocket("ws://localhost:8080")
 
         events_emitted = False
 
@@ -350,9 +346,7 @@ class TestTrackReceivedMessage:
     @pytest.mark.asyncio
     async def test_track_message_without_buffer(self) -> None:
         """Test that tracking does nothing without buffer."""
-        manager: WebSocket[dict[str, Any]] = WebSocket(
-            "ws://localhost:8080"
-        )
+        manager: WebSocket[dict[str, Any]] = WebSocket("ws://localhost:8080")
 
         # Should not raise
         await manager._track_received_message({"data": "test"})
