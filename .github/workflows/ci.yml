@@ -30,8 +30,10 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Build Cython extension
-        run: uv run python setup.py build_ext --inplace
+      - name: Install build tools and build Cython extension
+        run: |
+          uv pip install setuptools Cython
+          uv run python setup.py build_ext --inplace
 
       - name: Run tests
         run: uv run pytest tests/ --benchmark-disable -q
@@ -53,8 +55,10 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Build Cython extension
-        run: uv run python setup.py build_ext --inplace
+      - name: Install build tools and build Cython extension
+        run: |
+          uv pip install setuptools Cython
+          uv run python setup.py build_ext --inplace
 
       - name: Ruff check
         run: uv run ruff check src/ tests/

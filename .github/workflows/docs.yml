@@ -32,8 +32,10 @@ jobs:
       - name: Install dependencies
         run: uv sync --group docs
 
-      - name: Build Cython extension
-        run: uv run python setup.py build_ext --inplace
+      - name: Install build tools and build Cython extension
+        run: |
+          uv pip install setuptools Cython
+          uv run python setup.py build_ext --inplace
 
       - name: Build docs
         run: uv run mkdocs build --strict
