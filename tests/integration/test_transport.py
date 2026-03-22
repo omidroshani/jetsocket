@@ -14,8 +14,8 @@ import pytest
 import websockets.server
 from websockets.frames import CloseCode as WsCloseCode
 
-from wsfabric.transport import AsyncTransport, BaseTransportConfig, SyncTransport
-from wsfabric.types import Opcode
+from jetsocket.transport import AsyncTransport, BaseTransportConfig, SyncTransport
+from jetsocket.types import Opcode
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

@@ -1,4 +1,4 @@
-"""Multiplexed WebSocket connections for WSFabric.
+"""Multiplexed WebSocket connections for JetSocket.
 
 This module provides multiplexing support for managing multiple logical
 subscriptions over a single WebSocket connection.
@@ -17,10 +17,10 @@ from typing import (
     TypeVar,
 )
 
-from wsfabric.exceptions import InvalidStateError, TimeoutError
-from wsfabric.manager import WebSocket
-from wsfabric.state import ConnectionState
-from wsfabric.stats import ConnectionStats
+from jetsocket.exceptions import InvalidStateError, TimeoutError
+from jetsocket.manager import WebSocket
+from jetsocket.state import ConnectionState
+from jetsocket.stats import ConnectionStats
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -364,7 +364,7 @@ class Multiplex(Generic[T]):
 
         # Start message router
         self._router_task = asyncio.create_task(
-            self._message_router(), name="wsfabric-multiplex-router"
+            self._message_router(), name="jetsocket-multiplex-router"
         )
 
     async def close(self) -> None:

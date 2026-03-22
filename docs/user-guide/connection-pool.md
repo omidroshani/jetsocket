@@ -1,11 +1,11 @@
 # Connection Pool
 
-WSFabric provides connection pooling for managing multiple WebSocket connections efficiently.
+JetSocket provides connection pooling for managing multiple WebSocket connections efficiently.
 
 ## Basic Usage
 
 ```python
-from wsfabric import ConnectionPool, ConnectionPoolConfig
+from jetsocket import ConnectionPool, ConnectionPoolConfig
 
 config = ConnectionPoolConfig(
     max_connections=10,
@@ -112,7 +112,7 @@ pool = ConnectionPool(
 
 ```python
 import asyncio
-from wsfabric import ConnectionPool, ConnectionPoolConfig, HeartbeatConfig
+from jetsocket import ConnectionPool, ConnectionPoolConfig, HeartbeatConfig
 
 async def process_stream(pool, symbol):
     async with pool.acquire(f"/ws/{symbol}") as conn:

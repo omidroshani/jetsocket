@@ -1,13 +1,13 @@
 # Sync API
 
-WSFabric provides a synchronous API that wraps the async implementation with a background thread.
+JetSocket provides a synchronous API that wraps the async implementation with a background thread.
 
 ## SyncWebSocket
 
 The sync client provides blocking operations for non-async codebases:
 
 ```python
-from wsfabric import SyncWebSocket
+from jetsocket import SyncWebSocket
 
 ws = SyncWebSocket("wss://example.com/ws")
 ws.connect()
@@ -33,7 +33,7 @@ with SyncWebSocket("wss://example.com/ws") as ws:
 All WebSocket options are supported:
 
 ```python
-from wsfabric import (
+from jetsocket import (
     SyncWebSocket,
     BackoffConfig,
     HeartbeatConfig,
@@ -89,7 +89,7 @@ print(f"Messages: {stats.messages_received}")
 ## Full Example
 
 ```python
-from wsfabric import SyncWebSocket, BackoffConfig
+from jetsocket import SyncWebSocket, BackoffConfig
 
 def main():
     ws = SyncWebSocket(

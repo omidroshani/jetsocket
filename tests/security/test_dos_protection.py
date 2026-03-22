@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from wsfabric._core import Deflater, FrameParser, RingBuffer
-from wsfabric._core import (  
+from jetsocket._core import Deflater, FrameParser, RingBuffer
+from jetsocket._core import (  
         Deflater,
         FrameParser,
         RingBuffer,

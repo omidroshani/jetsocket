@@ -1,17 +1,17 @@
-"""Exception hierarchy for WSFabric.
+"""Exception hierarchy for JetSocket.
 
-All exceptions inherit from WSFabricError, which itself inherits from Exception.
+All exceptions inherit from JetSocketError, which itself inherits from Exception.
 This allows catching all library exceptions with a single except clause.
 """
 
 from __future__ import annotations
 
 
-class WSFabricError(Exception):
-    """Base exception for all WSFabric errors."""
+class JetSocketError(Exception):
+    """Base exception for all JetSocket errors."""
 
 
-class ConnectionError(WSFabricError):
+class ConnectionError(JetSocketError):
     """Raised when a connection cannot be established or is lost unexpectedly.
 
     This includes network errors, DNS resolution failures, and unexpected
@@ -19,7 +19,7 @@ class ConnectionError(WSFabricError):
     """
 
 
-class ProtocolError(WSFabricError):
+class ProtocolError(JetSocketError):
     """Raised when the WebSocket protocol is violated.
 
     This includes invalid frames, unexpected opcodes, and other protocol-level
@@ -37,7 +37,7 @@ class ProtocolError(WSFabricError):
         self.code = code
 
 
-class HandshakeError(WSFabricError):
+class HandshakeError(JetSocketError):
     """Raised when the WebSocket handshake fails.
 
     This includes HTTP upgrade failures, invalid Sec-WebSocket-Accept,
@@ -63,7 +63,7 @@ class HandshakeError(WSFabricError):
         self.headers = headers or {}
 
 
-class CloseError(WSFabricError):
+class CloseError(JetSocketError):
     """Raised when the WebSocket connection is closed with an error code.
 
     Normal closures (code 1000) do not raise this exception.
@@ -98,7 +98,7 @@ class CloseError(WSFabricError):
         return self.code == 1001
 
 
-class TimeoutError(WSFabricError):
+class TimeoutError(JetSocketError):
     """Raised when an operation times out.
 
     This includes connection timeouts, read timeouts, and heartbeat timeouts.
@@ -123,7 +123,7 @@ class TimeoutError(WSFabricError):
         self.operation = operation
 
 
-class BufferOverflowError(WSFabricError):
+class BufferOverflowError(JetSocketError):
     """Raised when the message buffer overflows and policy is 'error'."""
 
     def __init__(
@@ -145,7 +145,7 @@ class BufferOverflowError(WSFabricError):
         self.current_size = current_size
 
 
-class InvalidStateError(WSFabricError):
+class InvalidStateError(JetSocketError):
     """Raised when an operation is attempted in an invalid connection state.
 
     For example, sending a message before connecting.
@@ -170,7 +170,7 @@ class InvalidStateError(WSFabricError):
         self.required_states = required_states or []
 
 
-class PoolExhaustedError(WSFabricError):
+class PoolExhaustedError(JetSocketError):
     """Raised when connection pool has no available connections.
 
     This occurs when all connections are in use and the acquire timeout
@@ -196,7 +196,7 @@ class PoolExhaustedError(WSFabricError):
         self.timeout = timeout
 
 
-class PoolClosedError(WSFabricError):
+class PoolClosedError(JetSocketError):
     """Raised when operating on a closed pool.
 
     This occurs when attempting to acquire a connection from a pool

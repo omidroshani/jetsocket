@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from wsfabric.transport import BaseTransportConfig, SyncTransport
+from jetsocket.transport import BaseTransportConfig, SyncTransport
 
 
 class TestSyncTransportIO:

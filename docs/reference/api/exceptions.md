@@ -1,12 +1,12 @@
 # Exceptions
 
-WSFabric defines a hierarchy of exceptions for precise error handling.
+JetSocket defines a hierarchy of exceptions for precise error handling.
 
 ## Exception Hierarchy
 
 ```mermaid
 graph TD
-    A[WSFabricError] --> B[ConnectionError]
+    A[JetSocketError] --> B[ConnectionError]
     A --> C[ProtocolError]
     A --> D[BufferError]
     A --> E[PoolError]
@@ -22,20 +22,20 @@ graph TD
 
 ## Base Exception
 
-::: wsfabric.exceptions.WSFabricError
+::: jetsocket.exceptions.JetSocketError
     options:
       show_source: false
 
-All WSFabric exceptions inherit from `WSFabricError`:
+All JetSocket exceptions inherit from `JetSocketError`:
 
 ```python
-from wsfabric import WSFabricError
+from jetsocket import JetSocketError
 
 try:
     async with WebSocket(...) as ws:
         ...
-except WSFabricError as e:
-    print(f"WSFabric error: {e}")
+except JetSocketError as e:
+    print(f"JetSocket error: {e}")
 ```
 
 ## Connection Exceptions
@@ -45,7 +45,7 @@ except WSFabricError as e:
 Raised when the connection is closed unexpectedly:
 
 ```python
-from wsfabric import ConnectionClosedError
+from jetsocket import ConnectionClosedError
 
 try:
     await ws.send({"data": "test"})
@@ -58,7 +58,7 @@ except ConnectionClosedError as e:
 Raised when a connection or operation times out:
 
 ```python
-from wsfabric import ConnectionTimeoutError
+from jetsocket import ConnectionTimeoutError
 
 try:
     await ws.connect(timeout=5.0)
@@ -71,7 +71,7 @@ except ConnectionTimeoutError:
 Raised when the server refuses the connection:
 
 ```python
-from wsfabric import ConnectionRefusedError
+from jetsocket import ConnectionRefusedError
 
 try:
     await ws.connect()
@@ -86,7 +86,7 @@ except ConnectionRefusedError as e:
 Raised when an invalid WebSocket frame is received:
 
 ```python
-from wsfabric import InvalidFrameError
+from jetsocket import InvalidFrameError
 
 try:
     async for msg in ws:
@@ -100,7 +100,7 @@ except InvalidFrameError as e:
 Raised when message parsing fails:
 
 ```python
-from wsfabric import InvalidMessageError
+from jetsocket import InvalidMessageError
 
 try:
     msg = await ws.recv()
@@ -115,7 +115,7 @@ except InvalidMessageError as e:
 Raised when the buffer is full and overflow policy is "error":
 
 ```python
-from wsfabric import BufferOverflowError, BufferConfig
+from jetsocket import BufferOverflowError, BufferConfig
 
 ws = WebSocket(
     "wss://example.com/ws",
@@ -136,7 +136,7 @@ except BufferOverflowError as e:
 Raised when all connections in the pool are in use:
 
 ```python
-from wsfabric import PoolExhaustedError
+from jetsocket import PoolExhaustedError
 
 try:
     async with pool.acquire("/ws", timeout=5.0) as conn:
@@ -152,7 +152,7 @@ except PoolExhaustedError as e:
 Raised when an operation is attempted in an invalid state:
 
 ```python
-from wsfabric import InvalidStateError
+from jetsocket import InvalidStateError
 
 try:
     await ws.send({"data": "test"})  # Not connected
@@ -182,6 +182,6 @@ try:
     async with WebSocket(...) as ws:
         async for msg in ws:
             process(msg)
-except WSFabricError as e:
+except JetSocketError as e:
     logger.error(f"WebSocket error: {e}")
 ```

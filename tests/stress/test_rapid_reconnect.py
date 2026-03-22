@@ -6,9 +6,9 @@ import os
 
 import pytest
 
-from wsfabric.transport import AsyncTransport, BaseTransportConfig
+from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
-ITERATIONS = int(os.environ.get("WSFABRIC_RECONNECT_ITERATIONS", "50"))
+ITERATIONS = int(os.environ.get("JETSOCKET_RECONNECT_ITERATIONS", "50"))
 
 
 @pytest.mark.stress

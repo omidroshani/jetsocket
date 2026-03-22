@@ -8,25 +8,25 @@
 ## Install from PyPI
 
 ```bash
-pip install wsfabric
+pip install jetsocket
 ```
 
 ## Optional Dependencies
 
-WSFabric has optional dependencies for enhanced functionality:
+JetSocket has optional dependencies for enhanced functionality:
 
 ### Pydantic Support
 
 For typed messages with automatic validation:
 
 ```bash
-pip install wsfabric[pydantic]
+pip install jetsocket[pydantic]
 ```
 
 ### All Optional Dependencies
 
 ```bash
-pip install wsfabric[all]
+pip install jetsocket[all]
 ```
 
 ## Development Installation
@@ -34,21 +34,21 @@ pip install wsfabric[all]
 For development, clone the repository and install with dev dependencies:
 
 ```bash
-git clone https://github.com/wsfabric/wsfabric.git
-cd wsfabric
+git clone https://github.com/jetsocket/jetsocket.git
+cd jetsocket
 pip install -e ".[dev]"
 ```
 
 ## Verify Installation
 
 ```python
-import wsfabric
-print(wsfabric.__version__)
+import jetsocket
+print(jetsocket.__version__)
 ```
 
 ## Platform Support
 
-WSFabric supports:
+JetSocket supports:
 
 - Linux (x86_64, aarch64)
 - macOS (x86_64, arm64)

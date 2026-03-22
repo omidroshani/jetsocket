@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from wsfabric.sync_client import SyncWebSocket
+from jetsocket.sync_client import SyncWebSocket
 
 
 class TestSyncClientState:

@@ -1,4 +1,4 @@
-"""Core types for WSFabric.
+"""Core types for JetSocket.
 
 This module defines the fundamental types used throughout the library,
 including WebSocket opcodes and frame representations.

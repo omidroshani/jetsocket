@@ -1,10 +1,10 @@
-"""Tests for wsfabric.transport.uri module."""
+"""Tests for jetsocket.transport.uri module."""
 
 from __future__ import annotations
 
 import pytest
 
-from wsfabric.transport.uri import WebSocketURI, parse_uri
+from jetsocket.transport.uri import WebSocketURI, parse_uri
 
 
 class TestParseUri:

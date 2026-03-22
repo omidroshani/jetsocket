@@ -1,4 +1,4 @@
-"""Connection state machine for WSFabric.
+"""Connection state machine for JetSocket.
 
 This module defines the connection states and manages state transitions
 for WebSocket connections. All state changes emit events for observability.

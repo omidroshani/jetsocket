@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "Cython>=3.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wsfabric"
+name = "jetsocket"
 version = "0.1.0"
 description = "Production-grade, resilient WebSocket library for Python with Cython-powered performance"
 readme = "README.md"
@@ -37,16 +37,16 @@ truststore = ["truststore>=0.8"]
 all = ["pydantic>=2.0", "orjson>=3.9", "uvloop>=0.19; sys_platform != 'win32'", "truststore>=0.8"]
 
 [project.urls]
-Homepage = "https://github.com/omidroshani/wsfabric"
-Documentation = "https://github.com/omidroshani/wsfabric#readme"
-Repository = "https://github.com/omidroshani/wsfabric"
-Issues = "https://github.com/omidroshani/wsfabric/issues"
+Homepage = "https://github.com/omidroshani/jetsocket"
+Documentation = "https://github.com/omidroshani/jetsocket#readme"
+Repository = "https://github.com/omidroshani/jetsocket"
+Issues = "https://github.com/omidroshani/jetsocket/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-wsfabric = ["_core.pyx", "py.typed", "_core.pyi"]
+jetsocket = ["_core.pyx", "py.typed", "_core.pyi"]
 
 [dependency-groups]
 dev = [
@@ -100,7 +100,7 @@ module = "pydantic"
 ignore_missing_imports = true
 
 [tool.coverage.run]
-source = ["src/wsfabric"]
+source = ["src/jetsocket"]
 branch = true
 omit = ["*/tests/*", "*/_core.py"]
 

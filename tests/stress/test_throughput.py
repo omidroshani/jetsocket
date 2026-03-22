@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from wsfabric.transport import AsyncTransport, BaseTransportConfig
+from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
 
 @pytest.mark.stress

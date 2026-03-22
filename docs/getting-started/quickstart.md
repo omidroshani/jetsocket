@@ -1,6 +1,6 @@
 # Quickstart
 
-This guide will get you up and running with WSFabric in under 5 minutes.
+This guide will get you up and running with JetSocket in under 5 minutes.
 
 ## Basic Connection
 
@@ -8,7 +8,7 @@ This guide will get you up and running with WSFabric in under 5 minutes.
 
 ```python
 import asyncio
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 async def main():
     ws = WebSocket("wss://echo.websocket.org")
@@ -30,7 +30,7 @@ asyncio.run(main())
 ### Sync Usage
 
 ```python
-from wsfabric import SyncWebSocket
+from jetsocket import SyncWebSocket
 
 with SyncWebSocket("wss://echo.websocket.org") as ws:
     ws.send({"hello": "world"})
@@ -67,10 +67,10 @@ Both async and sync clients support context managers for automatic cleanup:
 
 ## Event Handling
 
-WSFabric provides a rich event system for monitoring connection lifecycle:
+JetSocket provides a rich event system for monitoring connection lifecycle:
 
 ```python
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 ws = WebSocket("wss://example.com/ws")
 
@@ -93,10 +93,10 @@ async def on_message(event):
 
 ## Using Presets
 
-WSFabric provides optimized presets for common use cases:
+JetSocket provides optimized presets for common use cases:
 
 ```python
-from wsfabric.presets import trading, llm_stream, dashboard
+from jetsocket.presets import trading, llm_stream, dashboard
 
 # For crypto trading - fast reconnect, large buffer
 ws = trading("wss://stream.binance.com/ws")
@@ -114,7 +114,7 @@ For type-safe message handling:
 
 ```python
 from pydantic import BaseModel
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 class TradeMessage(BaseModel):
     symbol: str

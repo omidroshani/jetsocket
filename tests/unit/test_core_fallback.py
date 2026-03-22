@@ -1,4 +1,4 @@
-"""Tests for wsfabric._core_fallback module.
+"""Tests for jetsocket._core_fallback module.
 
 These tests verify the pure-Python fallback implementation matches
 the expected behavior of the Rust core.
@@ -10,7 +10,7 @@ import base64
 
 import pytest
 
-from wsfabric._core import (
+from jetsocket._core import (
     Frame,
     FrameParser,
     Handshake,

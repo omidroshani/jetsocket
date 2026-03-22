@@ -1,13 +1,13 @@
 # Async API
 
-The async API is WSFabric's primary interface, built on native asyncio.
+The async API is JetSocket's primary interface, built on native asyncio.
 
 ## WebSocket
 
 The main entry point for async WebSocket connections:
 
 ```python
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 ws = WebSocket("wss://example.com/ws")
 ```
@@ -15,7 +15,7 @@ ws = WebSocket("wss://example.com/ws")
 ### Configuration
 
 ```python
-from wsfabric import (
+from jetsocket import (
     WebSocket,
     BackoffConfig,
     HeartbeatConfig,
@@ -96,7 +96,7 @@ print(f"Latency: {stats.latency_ms}ms")
 
 ```python
 import asyncio
-from wsfabric import WebSocket, BackoffConfig, HeartbeatConfig
+from jetsocket import WebSocket, BackoffConfig, HeartbeatConfig
 
 async def main():
     ws = WebSocket(

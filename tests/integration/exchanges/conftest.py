@@ -6,9 +6,9 @@ import os
 
 import pytest
 
-NETWORK_TESTS_ENABLED = bool(os.environ.get("WSFABRIC_NETWORK_TESTS"))
+NETWORK_TESTS_ENABLED = bool(os.environ.get("JETSOCKET_NETWORK_TESTS"))
 
 skip_no_network = pytest.mark.skipif(
     not NETWORK_TESTS_ENABLED,
-    reason="Set WSFABRIC_NETWORK_TESTS=1 to run exchange tests",
+    reason="Set JETSOCKET_NETWORK_TESTS=1 to run exchange tests",
 )

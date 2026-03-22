@@ -1,1 +1,1 @@
-"""Integration tests for WSFabric."""
+"""Integration tests for JetSocket."""

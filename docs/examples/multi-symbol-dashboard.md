@@ -12,7 +12,7 @@ This example demonstrates how to build a real-time dashboard that displays multi
 ## Prerequisites
 
 ```bash
-pip install wsfabric
+pip install jetsocket
 ```
 
 ## Full Code
@@ -26,7 +26,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any
 
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 
 @dataclass

@@ -20,10 +20,10 @@ test-stress: ## Run stress tests only
 	uv run pytest tests/stress/ -m stress --benchmark-disable
 
 test-exchange: ## Run exchange integration tests (requires network)
-	WSFABRIC_NETWORK_TESTS=1 uv run pytest tests/integration/exchanges/ -m exchange
+	JETSOCKET_NETWORK_TESTS=1 uv run pytest tests/integration/exchanges/ -m exchange
 
 test-coverage: ## Run tests with coverage report
-	uv run pytest tests/ --cov=src/wsfabric --cov-report=term-missing --benchmark-disable
+	uv run pytest tests/ --cov=src/jetsocket --cov-report=term-missing --benchmark-disable
 
 test-bench: ## Run benchmark tests
 	uv run pytest tests/unit/test_benchmarks.py --benchmark-only
@@ -37,7 +37,7 @@ format: ## Format code
 	uv run ruff check src/ tests/ --fix
 
 typecheck: ## Run type checker
-	uv run mypy src/wsfabric/ --strict
+	uv run mypy src/jetsocket/ --strict
 
 check: lint typecheck ## Run lint + typecheck
 

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from wsfabric.transport import AsyncTransport, BaseTransportConfig
+from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
 
 class TestAsyncTransportIO:

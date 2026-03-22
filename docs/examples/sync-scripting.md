@@ -12,7 +12,7 @@ This example demonstrates how to use the synchronous API for simple scripts and 
 ## Prerequisites
 
 ```bash
-pip install wsfabric
+pip install jetsocket
 ```
 
 ## Basic Example
@@ -20,7 +20,7 @@ pip install wsfabric
 ```python
 """Simple sync WebSocket script."""
 
-from wsfabric import SyncWebSocket
+from jetsocket import SyncWebSocket
 
 
 def main():
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
 from __future__ import annotations
 
-from wsfabric import SyncWebSocket, HeartbeatConfig
+from jetsocket import SyncWebSocket, HeartbeatConfig
 
 
 def fetch_prices(symbols: list[str], count: int = 5) -> dict[str, list[float]]:
@@ -151,7 +151,7 @@ except TimeoutError:
 
 ```python
 # In a notebook cell
-from wsfabric import SyncWebSocket
+from jetsocket import SyncWebSocket
 
 ws = SyncWebSocket("wss://stream.binance.com:9443/ws/btcusdt@ticker")
 ws.connect()

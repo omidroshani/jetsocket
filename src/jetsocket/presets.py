@@ -1,9 +1,9 @@
-"""Pre-configured WebSocket profiles for WSFabric.
+"""Pre-configured WebSocket profiles for JetSocket.
 
 This module provides optimized presets for common use cases.
 
 Usage:
-    >>> from wsfabric.presets import trading
+    >>> from jetsocket.presets import trading
     >>> ws = trading("wss://stream.binance.com/ws")
 """
 
@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from wsfabric.backoff import BackoffConfig
-from wsfabric.buffer import BufferConfig
-from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.manager import WebSocket
+from jetsocket.backoff import BackoffConfig
+from jetsocket.buffer import BufferConfig
+from jetsocket.heartbeat import HeartbeatConfig
+from jetsocket.manager import WebSocket
 
 
 def trading(uri: str, **overrides: Any) -> WebSocket[Any]:

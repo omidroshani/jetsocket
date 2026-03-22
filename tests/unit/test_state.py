@@ -1,10 +1,10 @@
-"""Tests for wsfabric.state module."""
+"""Tests for jetsocket.state module."""
 
 from __future__ import annotations
 
 import pytest
 
-from wsfabric.state import (
+from jetsocket.state import (
     VALID_TRANSITIONS,
     ConnectionState,
     is_valid_transition,

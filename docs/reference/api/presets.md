@@ -2,18 +2,18 @@
 
 Pre-configured WebSocket profiles for common use cases.
 
-::: wsfabric.presets.trading
+::: jetsocket.presets.trading
 
-::: wsfabric.presets.llm_stream
+::: jetsocket.presets.llm_stream
 
-::: wsfabric.presets.dashboard
+::: jetsocket.presets.dashboard
 
-::: wsfabric.presets.minimal
+::: jetsocket.presets.minimal
 
 ## Usage
 
 ```python
-from wsfabric.presets import trading, llm_stream, dashboard
+from jetsocket.presets import trading, llm_stream, dashboard
 
 # For crypto trading
 ws = trading("wss://stream.binance.com/ws")
@@ -84,7 +84,7 @@ Basic configuration with sensible defaults:
 All presets accept `**overrides` to customize settings:
 
 ```python
-from wsfabric.presets import trading, llm_stream
+from jetsocket.presets import trading, llm_stream
 
 # Trading preset with custom buffer
 ws = trading(

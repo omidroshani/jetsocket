@@ -1,4 +1,4 @@
-"""Heartbeat management for WSFabric.
+"""Heartbeat management for JetSocket.
 
 This module provides automatic ping/pong handling to detect dead connections
 and measure latency. Supports both WebSocket-level pings and application-level
@@ -139,7 +139,7 @@ class HeartbeatManager:
         self._pong_event = asyncio.Event()
         self._task = asyncio.create_task(
             self._heartbeat_loop(send_ping, on_timeout),
-            name="wsfabric-heartbeat",
+            name="jetsocket-heartbeat",
         )
 
     async def stop(self) -> None:

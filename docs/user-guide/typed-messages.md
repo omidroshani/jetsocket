@@ -1,13 +1,13 @@
 # Typed Messages
 
-WSFabric supports type-safe message handling with Pydantic models.
+JetSocket supports type-safe message handling with Pydantic models.
 
 ## Installation
 
 Pydantic is an optional dependency:
 
 ```bash
-pip install wsfabric[pydantic]
+pip install jetsocket[pydantic]
 # or
 pip install pydantic
 ```
@@ -18,7 +18,7 @@ Pass a Pydantic model via `message_type=` for automatic validation and type hint
 
 ```python
 from pydantic import BaseModel
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 class TradeMessage(BaseModel):
     symbol: str
@@ -131,7 +131,7 @@ ws = WebSocket(
 ```python
 import asyncio
 from pydantic import BaseModel, Field
-from wsfabric import WebSocket, HeartbeatConfig
+from jetsocket import WebSocket, HeartbeatConfig
 
 class BinanceTrade(BaseModel):
     event_type: str = Field(alias="e")

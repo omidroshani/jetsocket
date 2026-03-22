@@ -2,7 +2,7 @@
 
 Connection pool for managing multiple WebSocket connections efficiently.
 
-::: wsfabric.pool.ConnectionPool
+::: jetsocket.pool.ConnectionPool
     options:
       show_source: true
       members:
@@ -12,14 +12,14 @@ Connection pool for managing multiple WebSocket connections efficiently.
         - close
         - stats
 
-::: wsfabric.pool.ConnectionPoolConfig
+::: jetsocket.pool.ConnectionPoolConfig
     options:
       show_source: true
 
 ## Usage
 
 ```python
-from wsfabric import ConnectionPool, ConnectionPoolConfig
+from jetsocket import ConnectionPool, ConnectionPoolConfig
 
 config = ConnectionPoolConfig(
     max_connections=10,
@@ -58,7 +58,7 @@ print(f"Idle: {stats.idle_connections}")
 When all connections are in use:
 
 ```python
-from wsfabric import PoolExhaustedError
+from jetsocket import PoolExhaustedError
 
 try:
     async with pool.acquire("/ws", timeout=5.0) as conn:

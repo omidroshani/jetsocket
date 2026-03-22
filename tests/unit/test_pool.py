@@ -9,19 +9,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from wsfabric.exceptions import (
+from jetsocket.exceptions import (
     InvalidStateError,
     PoolClosedError,
     PoolExhaustedError,
 )
-from wsfabric.pool import (
+from jetsocket.pool import (
     ConnectionPool,
     ConnectionPoolConfig,
     PooledConnection,
     PoolStats,
     _PooledConnectionState,
 )
-from wsfabric.state import ConnectionState
+from jetsocket.state import ConnectionState
 
 
 class TestConnectionPoolConfig:
@@ -391,7 +391,7 @@ class TestConnectionPoolAcquire:
         mock_manager.state = ConnectionState.CONNECTED
         mock_manager.is_connected = True
 
-        with patch("wsfabric.pool.WebSocket", return_value=mock_manager):
+        with patch("jetsocket.pool.WebSocket", return_value=mock_manager):
             conn = await pool.acquire("wss://example.com/ws")
 
             assert isinstance(conn, PooledConnection)
@@ -416,7 +416,7 @@ class TestConnectionPoolAcquire:
         mock_manager.is_connected = True
         mock_manager.stats = MagicMock(return_value=mock_stats)
 
-        with patch("wsfabric.pool.WebSocket", return_value=mock_manager):
+        with patch("jetsocket.pool.WebSocket", return_value=mock_manager):
             # Acquire and release
             conn1 = await pool.acquire("wss://example.com/ws")
             await conn1.release()
@@ -448,7 +448,7 @@ class TestConnectionPoolRelease:
         mock_manager.is_connected = True
         mock_manager.stats = MagicMock(return_value=mock_stats)
 
-        with patch("wsfabric.pool.WebSocket", return_value=mock_manager):
+        with patch("jetsocket.pool.WebSocket", return_value=mock_manager):
             conn = await pool.acquire("wss://example.com/ws")
 
             stats_before = pool.stats()
@@ -474,7 +474,7 @@ class TestConnectionPoolRelease:
         mock_manager.state = ConnectionState.CONNECTED
         mock_manager.stats = MagicMock(return_value=mock_stats)
 
-        with patch("wsfabric.pool.WebSocket", return_value=mock_manager):
+        with patch("jetsocket.pool.WebSocket", return_value=mock_manager):
             conn = await pool.acquire("wss://example.com/ws")
 
             # Simulate connection death
@@ -516,7 +516,7 @@ class TestConnectionPoolStats:
         mock_manager.state = ConnectionState.CONNECTED
         mock_manager.stats = MagicMock(return_value=mock_stats)
 
-        with patch("wsfabric.pool.WebSocket", return_value=mock_manager):
+        with patch("jetsocket.pool.WebSocket", return_value=mock_manager):
             conn = await pool.acquire("wss://example.com/ws")
 
             stats = pool.stats()
@@ -557,7 +557,7 @@ class TestConnectionPoolClose:
         mock_manager.state = ConnectionState.CONNECTED
         mock_manager.stats = MagicMock(return_value=mock_stats)
 
-        with patch("wsfabric.pool.WebSocket", return_value=mock_manager):
+        with patch("jetsocket.pool.WebSocket", return_value=mock_manager):
             conn = await pool.acquire("wss://example.com/ws")
             await conn.release()
 
@@ -635,7 +635,7 @@ class TestConnectionPoolHealthCheck:
         mock_manager.state = ConnectionState.CONNECTED
         mock_manager.stats = MagicMock(return_value=mock_stats)
 
-        with patch("wsfabric.pool.WebSocket", return_value=mock_manager):
+        with patch("jetsocket.pool.WebSocket", return_value=mock_manager):
             async with pool:
                 conn = await pool.acquire("wss://example.com/ws")
                 await conn.release()

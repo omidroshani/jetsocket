@@ -2,7 +2,7 @@
 
 Synchronous WebSocket client that wraps the async WebSocket.
 
-::: wsfabric.sync_client.SyncWebSocket
+::: jetsocket.sync_client.SyncWebSocket
     options:
       show_source: true
       members:
@@ -21,7 +21,7 @@ Synchronous WebSocket client that wraps the async WebSocket.
 SyncWebSocket provides a blocking API for scripts and notebooks:
 
 ```python
-from wsfabric import SyncWebSocket
+from jetsocket import SyncWebSocket
 
 with SyncWebSocket("wss://example.com/ws") as ws:
     ws.send({"subscribe": "trades"})
@@ -40,7 +40,7 @@ with SyncWebSocket("wss://example.com/ws") as ws:
 Accepts the same configuration as WebSocket:
 
 ```python
-from wsfabric import SyncWebSocket, HeartbeatConfig
+from jetsocket import SyncWebSocket, HeartbeatConfig
 
 ws = SyncWebSocket(
     "wss://example.com/ws",
@@ -56,7 +56,7 @@ SyncWebSocket runs an event loop in a background thread. The client is safe to u
 ## Example
 
 ```python
-from wsfabric import SyncWebSocket
+from jetsocket import SyncWebSocket
 
 def process_trades():
     with SyncWebSocket("wss://stream.example.com/ws") as ws:

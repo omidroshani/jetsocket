@@ -51,7 +51,7 @@ htmlcov/
 # Cython / C extensions
 *.so
 *.c
-!src/wsfabric/_core.pyx
+!src/jetsocket/_core.pyx
 build/
 
 # Rust (legacy, removed)

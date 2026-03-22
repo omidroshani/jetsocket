@@ -7,10 +7,10 @@ import tracemalloc
 
 import pytest
 
-from wsfabric.transport import AsyncTransport, BaseTransportConfig
+from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
-from wsfabric._core import Deflater, RingBuffer
-from wsfabric._core import Deflater, RingBuffer  
+from jetsocket._core import Deflater, RingBuffer
+from jetsocket._core import Deflater, RingBuffer  
 
 
 def _get_memory() -> int:

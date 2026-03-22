@@ -8,7 +8,7 @@ import os
 
 import pytest
 
-from wsfabric.transport import AsyncTransport, BaseTransportConfig
+from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_WS = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview"

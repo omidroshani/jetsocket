@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to WSFabric will be documented in this file.
+All notable changes to JetSocket will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Multiplex` for managing multiple logical subscriptions over a single WebSocket
 - `WebSocket(message_type=...)` for Pydantic-validated messages
-- Preset functions (`trading`, `llm_stream`, `dashboard`, `minimal`) in `wsfabric.presets`
+- Preset functions (`trading`, `llm_stream`, `dashboard`, `minimal`) in `jetsocket.presets`
 - `py.typed` marker for PEP 561 type checking support
 - Connection pooling with `ConnectionPool` and `ConnectionPoolConfig`
 - Synchronous API with `SyncWebSocket`

@@ -12,7 +12,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any
 
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 
 @dataclass

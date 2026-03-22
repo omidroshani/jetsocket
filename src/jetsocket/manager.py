@@ -1,4 +1,4 @@
-"""WebSocket manager for WSFabric.
+"""WebSocket manager for JetSocket.
 
 This module provides the main user-facing API for WebSocket connections,
 including automatic reconnection, heartbeat management, and event handling.
@@ -19,9 +19,9 @@ from typing import (
     TypeVar,
 )
 
-from wsfabric.backoff import BackoffConfig, BackoffStrategy
-from wsfabric.buffer import BufferConfig, MessageBuffer, ReplayConfig
-from wsfabric.events import (
+from jetsocket.backoff import BackoffConfig, BackoffStrategy
+from jetsocket.buffer import BufferConfig, MessageBuffer, ReplayConfig
+from jetsocket.events import (
     BufferOverflowEvent,
     ClosedEvent,
     ClosingEvent,
@@ -42,18 +42,18 @@ from wsfabric.events import (
     ReplayStartedEvent,
     StateChangeEvent,
 )
-from wsfabric.exceptions import (
+from jetsocket.exceptions import (
     ConnectionError,
     HandshakeError,
     InvalidStateError,
     TimeoutError,
 )
-from wsfabric.heartbeat import HeartbeatConfig, HeartbeatManager
-from wsfabric.state import ConnectionState, is_valid_transition
-from wsfabric.stats import ConnectionStats, _MutableStats
-from wsfabric.transport._async import AsyncTransport
-from wsfabric.transport.base import BaseTransportConfig
-from wsfabric.types import CloseCode, Opcode
+from jetsocket.heartbeat import HeartbeatConfig, HeartbeatManager
+from jetsocket.state import ConnectionState, is_valid_transition
+from jetsocket.stats import ConnectionStats, _MutableStats
+from jetsocket.transport._async import AsyncTransport
+from jetsocket.transport.base import BaseTransportConfig
+from jetsocket.types import CloseCode, Opcode
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -445,12 +445,12 @@ class WebSocket(Generic[T]):
         # Start max connection age timer if configured
         if self._max_connection_age is not None:
             self._age_task = asyncio.create_task(
-                self._connection_age_timer(), name="wsfabric-age-timer"
+                self._connection_age_timer(), name="jetsocket-age-timer"
             )
 
         # Start message loop in background
         self._message_task = asyncio.create_task(
-            self._message_loop(), name="wsfabric-message-loop"
+            self._message_loop(), name="jetsocket-message-loop"
         )
 
     async def run(self) -> None:

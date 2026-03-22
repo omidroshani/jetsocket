@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from wsfabric.transport import AsyncTransport, BaseTransportConfig
+from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
 from .conftest import skip_no_network
 

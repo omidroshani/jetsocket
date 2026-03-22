@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from wsfabric.buffer import BufferConfig, ReplayConfig
-from wsfabric.events import (
+from jetsocket.buffer import BufferConfig, ReplayConfig
+from jetsocket.events import (
     BufferOverflowEvent,
     ReplayCompletedEvent,
     ReplayStartedEvent,
 )
-from wsfabric.manager import WebSocket
+from jetsocket.manager import WebSocket
 
 
 class TestReplayEvents:

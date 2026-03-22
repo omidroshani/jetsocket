@@ -16,14 +16,14 @@ class TestTypedWebSocketImportError:
     def test_typed_websocket_import_error(self) -> None:
         """Test TypedWebSocket raises ImportError without pydantic."""
         with patch.dict("sys.modules", {"pydantic": None}):
-            from wsfabric.typed import TypedWebSocket
+            from jetsocket.typed import TypedWebSocket
 
             with pytest.raises(ImportError, match=r"pydantic"):
                 TypedWebSocket("ws://example.com/ws", MagicMock())
 
     def test_create_typed_deserializer_import_error(self) -> None:
         """Test create_typed_deserializer raises ImportError without pydantic."""
-        from wsfabric.typed import create_typed_deserializer
+        from jetsocket.typed import create_typed_deserializer
 
         with (
             patch.dict("sys.modules", {"pydantic": None}),
@@ -40,7 +40,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from wsfabric.typed import TypedWebSocket
+        from jetsocket.typed import TypedWebSocket
 
         class TestMsg(BaseModel):
             value: str
@@ -54,7 +54,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from wsfabric.typed import TypedWebSocket
+        from jetsocket.typed import TypedWebSocket
 
         class TestMsg(BaseModel):
             value: str
@@ -67,7 +67,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from wsfabric.typed import TypedWebSocket
+        from jetsocket.typed import TypedWebSocket
 
         class TestMsg(BaseModel):
             value: str
@@ -82,7 +82,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from wsfabric.typed import TypedWebSocket
+        from jetsocket.typed import TypedWebSocket
 
         class TestMsg(BaseModel):
             value: str
@@ -97,7 +97,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from wsfabric.typed import TypedWebSocket
+        from jetsocket.typed import TypedWebSocket
 
         class TestMsg(BaseModel):
             value: str
@@ -111,7 +111,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from wsfabric.typed import TypedWebSocket
+        from jetsocket.typed import TypedWebSocket
 
         class TestMsg(BaseModel):
             value: str
@@ -124,7 +124,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from wsfabric.typed import create_typed_deserializer
+        from jetsocket.typed import create_typed_deserializer
 
         class TestMsg(BaseModel):
             value: str
@@ -138,7 +138,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel, ValidationError
 
-        from wsfabric.typed import create_typed_deserializer
+        from jetsocket.typed import create_typed_deserializer
 
         class TestMsg(BaseModel):
             value: int
@@ -154,7 +154,7 @@ class TestTypedWebSocketWithPydantic:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from wsfabric.typed import create_typed_deserializer
+        from jetsocket.typed import create_typed_deserializer
 
         class TestMsg(BaseModel):
             value: int

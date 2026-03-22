@@ -1,6 +1,6 @@
-"""WSFabric — Production-grade, resilient WebSocket library for Python.
+"""JetSocket — Production-grade, resilient WebSocket library for Python.
 
-WSFabric provides a high-performance, memory-efficient WebSocket client with:
+JetSocket provides a high-performance, memory-efficient WebSocket client with:
 - Cython-optimized frame parsing and compression
 - Automatic reconnection with exponential backoff
 - Heartbeat management (ping/pong)
@@ -9,10 +9,10 @@ WSFabric provides a high-performance, memory-efficient WebSocket client with:
 - Full type safety with generics
 
 Example:
-    >>> import wsfabric
+    >>> import jetsocket
     >>>
     >>> async def main():
-    ...     async with wsfabric.connect("wss://example.com/ws") as ws:
+    ...     async with jetsocket.connect("wss://example.com/ws") as ws:
     ...         async for message in ws:
     ...             print(message)
 
@@ -38,52 +38,52 @@ __all__ = [
     "ProtocolError",
     "SyncWebSocket",
     "TimeoutError",
-    "WSFabricError",
+    "JetSocketError",
     "WebSocket",
     "connect",
 ]
 
 # Import from submodules - eager imports for exceptions and state
-from wsfabric.exceptions import (
+from jetsocket.exceptions import (
     ConnectionError,
     HandshakeError,
     InvalidStateError,
     ProtocolError,
     TimeoutError,
-    WSFabricError,
+    JetSocketError,
 )
-from wsfabric.state import ConnectionState
+from jetsocket.state import ConnectionState
 
 # Lazy imports for heavier modules
 _lazy_imports: dict[str, str] = {
     # Primary API (new names)
-    "WebSocket": "wsfabric.manager",
-    "SyncWebSocket": "wsfabric.sync_client",
-    "Multiplex": "wsfabric.multiplex",
+    "WebSocket": "jetsocket.manager",
+    "SyncWebSocket": "jetsocket.sync_client",
+    "Multiplex": "jetsocket.multiplex",
     # Configuration
-    "BackoffConfig": "wsfabric.backoff",
-    "BufferConfig": "wsfabric.buffer",
-    "HeartbeatConfig": "wsfabric.heartbeat",
+    "BackoffConfig": "jetsocket.backoff",
+    "BufferConfig": "jetsocket.buffer",
+    "HeartbeatConfig": "jetsocket.heartbeat",
     # Exceptions (importable but not in __all__)
-    "BufferOverflowError": "wsfabric.exceptions",
-    "CloseError": "wsfabric.exceptions",
-    "PoolClosedError": "wsfabric.exceptions",
-    "PoolExhaustedError": "wsfabric.exceptions",
+    "BufferOverflowError": "jetsocket.exceptions",
+    "CloseError": "jetsocket.exceptions",
+    "PoolClosedError": "jetsocket.exceptions",
+    "PoolExhaustedError": "jetsocket.exceptions",
     # Types (importable but not in __all__)
-    "Frame": "wsfabric.types",
-    "Opcode": "wsfabric.types",
+    "Frame": "jetsocket.types",
+    "Opcode": "jetsocket.types",
     # Advanced (importable but not in __all__)
-    "ConnectionPool": "wsfabric.pool",
-    "ConnectionPoolConfig": "wsfabric.pool",
-    "ConnectionStats": "wsfabric.stats",
-    "MessageBuffer": "wsfabric.buffer",
-    "MultiplexConfig": "wsfabric.multiplex",
-    "MultiplexStats": "wsfabric.multiplex",
-    "PooledConnection": "wsfabric.pool",
-    "PoolStats": "wsfabric.pool",
-    "ReplayConfig": "wsfabric.buffer",
-    "Subscription": "wsfabric.multiplex",
-    "SubscriptionStats": "wsfabric.multiplex",
+    "ConnectionPool": "jetsocket.pool",
+    "ConnectionPoolConfig": "jetsocket.pool",
+    "ConnectionStats": "jetsocket.stats",
+    "MessageBuffer": "jetsocket.buffer",
+    "MultiplexConfig": "jetsocket.multiplex",
+    "MultiplexStats": "jetsocket.multiplex",
+    "PooledConnection": "jetsocket.pool",
+    "PoolStats": "jetsocket.pool",
+    "ReplayConfig": "jetsocket.buffer",
+    "Subscription": "jetsocket.multiplex",
+    "SubscriptionStats": "jetsocket.multiplex",
 }
 
 
@@ -111,12 +111,12 @@ async def connect(uri: str, **kwargs: Any) -> AsyncIterator[Any]:
         A connected WebSocket instance.
 
     Example:
-        >>> async with wsfabric.connect("wss://example.com/ws") as ws:
+        >>> async with jetsocket.connect("wss://example.com/ws") as ws:
         ...     await ws.send({"hello": "world"})
         ...     msg = await ws.recv()
     """
     # Import here to avoid circular import at module level
-    from wsfabric.manager import WebSocket  # noqa: PLC0415
+    from jetsocket.manager import WebSocket  # noqa: PLC0415
 
     ws: WebSocket[Any] = WebSocket(uri, **kwargs)
     await ws.connect()

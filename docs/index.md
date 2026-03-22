@@ -1,8 +1,8 @@
-# WSFabric
+# JetSocket
 
 **Production-grade, resilient WebSocket library for Python**
 
-WSFabric provides a high-performance, memory-efficient WebSocket client with:
+JetSocket provides a high-performance, memory-efficient WebSocket client with:
 
 - **Cython-optimized core** for frame parsing and compression
 - **Automatic reconnection** with exponential backoff and jitter
@@ -16,7 +16,7 @@ WSFabric provides a high-performance, memory-efficient WebSocket client with:
 === "Async"
 
     ```python
-    from wsfabric import WebSocket
+    from jetsocket import WebSocket
 
     async with WebSocket("wss://stream.example.com/ws") as ws:
         await ws.send({"subscribe": "trades"})
@@ -27,7 +27,7 @@ WSFabric provides a high-performance, memory-efficient WebSocket client with:
 === "Sync"
 
     ```python
-    from wsfabric import SyncWebSocket
+    from jetsocket import SyncWebSocket
 
     with SyncWebSocket("wss://stream.example.com/ws") as ws:
         ws.send({"subscribe": "trades"})
@@ -38,12 +38,12 @@ WSFabric provides a high-performance, memory-efficient WebSocket client with:
 ## Installation
 
 ```bash
-pip install wsfabric
+pip install jetsocket
 ```
 
-## Why WSFabric?
+## Why JetSocket?
 
-| Feature | websockets | websocket-client | aiohttp | **WSFabric** |
+| Feature | websockets | websocket-client | aiohttp | **JetSocket** |
 |---------|------------|------------------|---------|--------------|
 | Auto-Reconnect | :x: | :warning: basic | :x: | :white_check_mark: |
 | Exponential Backoff | :x: | :x: | :x: | :white_check_mark: |
@@ -57,10 +57,10 @@ pip install wsfabric
 
 ### Automatic Reconnection
 
-WSFabric handles disconnections gracefully with configurable exponential backoff:
+JetSocket handles disconnections gracefully with configurable exponential backoff:
 
 ```python
-from wsfabric import WebSocket, BackoffConfig
+from jetsocket import WebSocket, BackoffConfig
 
 ws = WebSocket(
     "wss://stream.example.com/ws",
@@ -78,7 +78,7 @@ ws = WebSocket(
 Never worry about idle disconnections again:
 
 ```python
-from wsfabric import WebSocket, HeartbeatConfig
+from jetsocket import WebSocket, HeartbeatConfig
 
 ws = WebSocket(
     "wss://stream.example.com/ws",
@@ -94,7 +94,7 @@ ws = WebSocket(
 Manage multiple connections efficiently:
 
 ```python
-from wsfabric import ConnectionPool, ConnectionPoolConfig
+from jetsocket import ConnectionPool, ConnectionPoolConfig
 
 config = ConnectionPoolConfig(max_connections=10)
 
@@ -110,7 +110,7 @@ async with ConnectionPool(config, base_uri="wss://stream.example.com") as pool:
 Multiple subscriptions over a single connection:
 
 ```python
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 async with Multiplex(
     "wss://stream.example.com/ws",
@@ -130,7 +130,7 @@ Full type checking with Pydantic models:
 
 ```python
 from pydantic import BaseModel
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 class TradeMessage(BaseModel):
     symbol: str
@@ -147,7 +147,7 @@ async with WebSocket("wss://stream.example.com/ws", message_type=TradeMessage) a
 Optimized configurations for different scenarios:
 
 ```python
-from wsfabric.presets import trading, llm_stream, dashboard
+from jetsocket.presets import trading, llm_stream, dashboard
 
 # For crypto trading
 ws = trading("wss://stream.binance.com/ws")
@@ -161,7 +161,7 @@ ws = dashboard("wss://dashboard.example.com/ws")
 
 ## What's Next?
 
-- [Installation](getting-started/installation.md) - Get WSFabric installed
+- [Installation](getting-started/installation.md) - Get JetSocket installed
 - [Quickstart](getting-started/quickstart.md) - Build your first WebSocket client
 - [User Guide](user-guide/async-api.md) - Deep dive into all features
 - [API Reference](reference/api/manager.md) - Full API documentation

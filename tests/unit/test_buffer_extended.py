@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from wsfabric.buffer import BufferConfig, MessageBuffer, ReplayConfig
+from jetsocket.buffer import BufferConfig, MessageBuffer, ReplayConfig
 
 
 class TestMessageBufferPythonPaths:

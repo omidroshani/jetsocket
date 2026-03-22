@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from wsfabric.buffer import BufferConfig, MessageBuffer, ReplayConfig
-from wsfabric.exceptions import BufferOverflowError
+from jetsocket.buffer import BufferConfig, MessageBuffer, ReplayConfig
+from jetsocket.exceptions import BufferOverflowError
 
 
 class TestBufferConfig:

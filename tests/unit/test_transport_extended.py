@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from wsfabric.exceptions import ConnectionError as WsConnectionError
-from wsfabric.transport import AsyncTransport, BaseTransportConfig, SyncTransport
-from wsfabric.types import Frame, Opcode
+from jetsocket.exceptions import ConnectionError as WsConnectionError
+from jetsocket.transport import AsyncTransport, BaseTransportConfig, SyncTransport
+from jetsocket.types import Frame, Opcode
 
 
 class TestAsyncTransportProperties:

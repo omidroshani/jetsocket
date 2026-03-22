@@ -1,11 +1,11 @@
 # Reconnection
 
-WSFabric provides automatic reconnection with configurable exponential backoff.
+JetSocket provides automatic reconnection with configurable exponential backoff.
 
 ## Basic Configuration
 
 ```python
-from wsfabric import WebSocket, BackoffConfig
+from jetsocket import WebSocket, BackoffConfig
 
 ws = WebSocket(
     "wss://example.com/ws",
@@ -72,7 +72,7 @@ backoff = BackoffConfig(
 
 ## Connection Age Limit
 
-Some services (like Binance) force disconnect after 24 hours. WSFabric can proactively reconnect:
+Some services (like Binance) force disconnect after 24 hours. JetSocket can proactively reconnect:
 
 ```python
 ws = WebSocket(
@@ -110,7 +110,7 @@ async def on_reconnected(event):
 
 ## Fatal vs Retriable Errors
 
-WSFabric automatically distinguishes between errors that should trigger reconnection and errors that should not:
+JetSocket automatically distinguishes between errors that should trigger reconnection and errors that should not:
 
 ### Retriable (will reconnect)
 

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from wsfabric.backoff import BackoffConfig
-from wsfabric.buffer import BufferConfig
-from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.manager import WebSocket
-from wsfabric.presets import dashboard, llm_stream, minimal, trading
+from jetsocket.backoff import BackoffConfig
+from jetsocket.buffer import BufferConfig
+from jetsocket.heartbeat import HeartbeatConfig
+from jetsocket.manager import WebSocket
+from jetsocket.presets import dashboard, llm_stream, minimal, trading
 
 
 class TestPresetsTrading:

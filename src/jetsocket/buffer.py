@@ -1,4 +1,4 @@
-"""Message buffering for WSFabric.
+"""Message buffering for JetSocket.
 
 This module provides message buffering with sequence tracking, deduplication,
 and replay support for WebSocket connections.
@@ -17,7 +17,7 @@ from typing import (
     TypeVar,
 )
 
-from wsfabric.exceptions import BufferOverflowError
+from jetsocket.exceptions import BufferOverflowError
 
 if TYPE_CHECKING:
     pass
@@ -94,7 +94,7 @@ class ReplayConfig:
             raise ValueError(msg)
 
 
-from wsfabric._core import RingBuffer as _CythonRingBuffer
+from jetsocket._core import RingBuffer as _CythonRingBuffer
 
 _CYTHON_AVAILABLE = True
 

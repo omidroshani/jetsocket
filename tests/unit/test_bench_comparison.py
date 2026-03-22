@@ -1,4 +1,4 @@
-"""Comparative benchmarks: WSFabric vs websockets vs websocket-client vs picows vs aiohttp.
+"""Comparative benchmarks: JetSocket vs websockets vs websocket-client vs picows vs aiohttp.
 
 Measures real WebSocket operations against a local echo server:
 - Connection establishment time
@@ -76,9 +76,9 @@ def _new_loop() -> asyncio.AbstractEventLoop:
 
 
 @pytest.mark.benchmark(group="connect")
-def test_wsfabric_connect(benchmark: Any, echo_server: str) -> None:
-    """WSFabric connection time."""
-    from wsfabric.transport import AsyncTransport, BaseTransportConfig
+def test_jetsocket_connect(benchmark: Any, echo_server: str) -> None:
+    """JetSocket connection time."""
+    from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
     config = BaseTransportConfig(connect_timeout=5.0)
     loop = _new_loop()
@@ -165,9 +165,9 @@ def test_aiohttp_connect(benchmark: Any, echo_server: str) -> None:
 
 
 @pytest.mark.benchmark(group="roundtrip-small")
-def test_wsfabric_rt_small(benchmark: Any, echo_server: str) -> None:
-    """WSFabric small message round-trip."""
-    from wsfabric.transport import AsyncTransport, BaseTransportConfig
+def test_jetsocket_rt_small(benchmark: Any, echo_server: str) -> None:
+    """JetSocket small message round-trip."""
+    from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
     config = BaseTransportConfig(connect_timeout=5.0, read_timeout=5.0)
     loop = _new_loop()
@@ -279,9 +279,9 @@ def test_aiohttp_rt_small(benchmark: Any, echo_server: str) -> None:
 
 
 @pytest.mark.benchmark(group="roundtrip-large")
-def test_wsfabric_rt_large(benchmark: Any, echo_server: str) -> None:
-    """WSFabric large message (10KB) round-trip."""
-    from wsfabric.transport import AsyncTransport, BaseTransportConfig
+def test_jetsocket_rt_large(benchmark: Any, echo_server: str) -> None:
+    """JetSocket large message (10KB) round-trip."""
+    from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
     config = BaseTransportConfig(connect_timeout=5.0, read_timeout=5.0)
     loop = _new_loop()
@@ -393,9 +393,9 @@ def test_aiohttp_rt_large(benchmark: Any, echo_server: str) -> None:
 
 
 @pytest.mark.benchmark(group="throughput")
-def test_wsfabric_throughput(benchmark: Any, echo_server: str) -> None:
-    """WSFabric throughput (1000 messages)."""
-    from wsfabric.transport import AsyncTransport, BaseTransportConfig
+def test_jetsocket_throughput(benchmark: Any, echo_server: str) -> None:
+    """JetSocket throughput (1000 messages)."""
+    from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
     config = BaseTransportConfig(connect_timeout=5.0, read_timeout=5.0)
     loop = _new_loop()

@@ -12,7 +12,7 @@ This example demonstrates how to stream responses from an LLM API using the LLM 
 ## Prerequisites
 
 ```bash
-pip install wsfabric
+pip install jetsocket
 ```
 
 ## Full Code
@@ -26,7 +26,7 @@ import asyncio
 import json
 import sys
 
-from wsfabric.presets import llm_stream
+from jetsocket.presets import llm_stream
 
 
 async def stream_completion(prompt: str) -> None:
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 The `llm_stream` preset is optimized for LLM APIs:
 
 ```python
-from wsfabric.presets import llm_stream
+from jetsocket.presets import llm_stream
 
 ws = llm_stream("wss://api.example.com/v1/stream")
 ```
@@ -127,7 +127,7 @@ async def on_message(event):
 ### With Authentication
 
 ```python
-from wsfabric.presets import llm_stream
+from jetsocket.presets import llm_stream
 
 ws = llm_stream(
     "wss://api.example.com/v1/stream",
@@ -138,7 +138,7 @@ ws = llm_stream(
 ### Custom Timeout
 
 ```python
-from wsfabric.presets import llm_stream
+from jetsocket.presets import llm_stream
 
 ws = llm_stream(
     "wss://api.example.com/v1/stream",

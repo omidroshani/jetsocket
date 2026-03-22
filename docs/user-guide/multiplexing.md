@@ -14,7 +14,7 @@ Many services (like Binance) allow hundreds of subscriptions per connection, but
 ## Basic Usage
 
 ```python
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 async with Multiplex(
     "wss://stream.example.com/ws",
@@ -198,7 +198,7 @@ async with Multiplex(
 
 ```python
 import asyncio
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 async def process_subscription(sub, name):
     async for msg in sub:

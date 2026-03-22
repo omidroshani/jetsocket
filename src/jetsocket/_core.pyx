@@ -1,5 +1,5 @@
 # cython: language_level=3, boundscheck=False, wraparound=False
-"""WSFabric Core — Cython-powered WebSocket primitives.
+"""JetSocket Core — Cython-powered WebSocket primitives.
 
 High-performance WebSocket frame parsing, masking, compression,
 handshake utilities, and ring buffer.
@@ -613,7 +613,7 @@ class RingBuffer:
     @classmethod
     def _get_overflow_error(cls):
         if cls._BufferOverflowError is None:
-            from wsfabric.exceptions import BufferOverflowError
+            from jetsocket.exceptions import BufferOverflowError
             cls._BufferOverflowError = BufferOverflowError
         return cls._BufferOverflowError
 

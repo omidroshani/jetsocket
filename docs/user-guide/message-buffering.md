@@ -1,11 +1,11 @@
 # Message Buffering
 
-WSFabric can buffer received messages with sequence tracking and deduplication.
+JetSocket can buffer received messages with sequence tracking and deduplication.
 
 ## Basic Configuration
 
 ```python
-from wsfabric import WebSocket, BufferConfig
+from jetsocket import WebSocket, BufferConfig
 
 ws = WebSocket(
     "wss://example.com/ws",
@@ -46,10 +46,10 @@ buffer = BufferConfig(
 
 ## Replay on Reconnect
 
-WSFabric can replay messages after reconnection:
+JetSocket can replay messages after reconnection:
 
 ```python
-from wsfabric import WebSocket, BufferConfig, ReplayConfig
+from jetsocket import WebSocket, BufferConfig, ReplayConfig
 
 ws = WebSocket(
     "wss://example.com/ws",

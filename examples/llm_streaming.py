@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 
-from wsfabric.presets import llm_stream
+from jetsocket.presets import llm_stream
 
 
 async def stream_completion(uri: str, prompt: str) -> None:

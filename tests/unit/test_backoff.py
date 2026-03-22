@@ -1,4 +1,4 @@
-"""Tests for wsfabric.backoff module."""
+"""Tests for jetsocket.backoff module."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from wsfabric.backoff import BackoffConfig, BackoffStrategy
+from jetsocket.backoff import BackoffConfig, BackoffStrategy
 
 
 class TestBackoffConfig:

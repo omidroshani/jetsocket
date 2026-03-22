@@ -11,9 +11,9 @@ class TestDeflater:
     def _get_deflater(self, **kwargs: object) -> object:
         """Get a Deflater from either Rust or fallback."""
         try:
-            from wsfabric._core import Deflater
+            from jetsocket._core import Deflater
         except ImportError:
-            from wsfabric._core import Deflater
+            from jetsocket._core import Deflater
         return Deflater(**kwargs)
 
     def test_compress_decompress_roundtrip(self) -> None:
@@ -152,9 +152,9 @@ class TestParseDeflateParams:
 
     def _parse(self, s: str) -> tuple[bool, bool, int, int]:
         try:
-            from wsfabric._core import parse_deflate_params
+            from jetsocket._core import parse_deflate_params
         except ImportError:
-            from wsfabric._core import parse_deflate_params
+            from jetsocket._core import parse_deflate_params
         return parse_deflate_params(s)
 
     def test_basic(self) -> None:
@@ -198,9 +198,9 @@ class TestValidateUtf8:
 
     def _validate(self, data: bytes) -> bool:
         try:
-            from wsfabric._core import validate_utf8
+            from jetsocket._core import validate_utf8
         except ImportError:
-            from wsfabric._core import validate_utf8
+            from jetsocket._core import validate_utf8
         return validate_utf8(data)
 
     def test_valid_ascii(self) -> None:

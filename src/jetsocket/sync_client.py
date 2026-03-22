@@ -1,4 +1,4 @@
-"""Synchronous WebSocket client for WSFabric.
+"""Synchronous WebSocket client for JetSocket.
 
 This module provides a synchronous API that wraps the async WebSocket
 using a background thread with its own event loop. This approach provides
@@ -25,14 +25,14 @@ from typing import (
     TypeVar,
 )
 
-from wsfabric.backoff import BackoffConfig
-from wsfabric.buffer import BufferConfig, ReplayConfig
-from wsfabric.events import EventData, EventType, Handler, MessageEvent
-from wsfabric.exceptions import ConnectionError, InvalidStateError, TimeoutError
-from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.manager import WebSocket
-from wsfabric.state import ConnectionState
-from wsfabric.stats import ConnectionStats, _MutableStats
+from jetsocket.backoff import BackoffConfig
+from jetsocket.buffer import BufferConfig, ReplayConfig
+from jetsocket.events import EventData, EventType, Handler, MessageEvent
+from jetsocket.exceptions import ConnectionError, InvalidStateError, TimeoutError
+from jetsocket.heartbeat import HeartbeatConfig
+from jetsocket.manager import WebSocket
+from jetsocket.state import ConnectionState
+from jetsocket.stats import ConnectionStats, _MutableStats
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -222,7 +222,7 @@ class SyncWebSocket(Generic[T]):
         self._started.clear()
         self._thread = threading.Thread(
             target=self._run_event_loop,
-            name="wsfabric-sync-loop",
+            name="jetsocket-sync-loop",
             daemon=True,
         )
         self._thread.start()

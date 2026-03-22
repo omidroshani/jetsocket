@@ -1,10 +1,10 @@
-"""Tests for wsfabric.types module."""
+"""Tests for jetsocket.types module."""
 
 from __future__ import annotations
 
 import pytest
 
-from wsfabric.types import CloseCode, Frame, Opcode
+from jetsocket.types import CloseCode, Frame, Opcode
 
 
 class TestOpcode:

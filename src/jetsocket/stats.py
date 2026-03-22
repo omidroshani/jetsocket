@@ -1,4 +1,4 @@
-"""Connection statistics for WSFabric.
+"""Connection statistics for JetSocket.
 
 This module provides statistics tracking for WebSocket connections,
 including message counts, byte counters, latency, and uptime.
@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from wsfabric.state import ConnectionState
+    from jetsocket.state import ConnectionState
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,7 +89,7 @@ class _MutableStats:
         """Get the current connection state."""
         if self._state is None:
             # Lazy import to avoid circular dependency
-            from wsfabric.state import ConnectionState  # noqa: PLC0415
+            from jetsocket.state import ConnectionState  # noqa: PLC0415
 
             return ConnectionState.IDLE
         return self._state

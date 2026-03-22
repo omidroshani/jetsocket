@@ -1,10 +1,10 @@
 # Basic Concepts
 
-Understanding the core concepts of WSFabric will help you use it effectively.
+Understanding the core concepts of JetSocket will help you use it effectively.
 
 ## Connection Lifecycle
 
-WSFabric manages WebSocket connections through a state machine:
+JetSocket manages WebSocket connections through a state machine:
 
 ```mermaid
 stateDiagram-v2
@@ -35,7 +35,7 @@ stateDiagram-v2
 
 ## Event System
 
-WSFabric emits events for every significant lifecycle change:
+JetSocket emits events for every significant lifecycle change:
 
 ```python
 @ws.on("connecting")      # About to connect
@@ -50,14 +50,14 @@ WSFabric emits events for every significant lifecycle change:
 
 ## Configuration Objects
 
-WSFabric uses frozen dataclasses for configuration:
+JetSocket uses frozen dataclasses for configuration:
 
 ### BackoffConfig
 
 Controls reconnection timing:
 
 ```python
-from wsfabric import BackoffConfig
+from jetsocket import BackoffConfig
 
 backoff = BackoffConfig(
     base=1.0,        # Initial delay
@@ -73,7 +73,7 @@ backoff = BackoffConfig(
 Controls ping/pong:
 
 ```python
-from wsfabric import HeartbeatConfig
+from jetsocket import HeartbeatConfig
 
 heartbeat = HeartbeatConfig(
     interval=30.0,  # Send ping every 30s
@@ -86,7 +86,7 @@ heartbeat = HeartbeatConfig(
 Controls message buffering:
 
 ```python
-from wsfabric import BufferConfig
+from jetsocket import BufferConfig
 
 buffer = BufferConfig(
     capacity=1000,
@@ -113,7 +113,7 @@ flowchart LR
 
 ## Error Handling
 
-WSFabric distinguishes between retriable and fatal errors:
+JetSocket distinguishes between retriable and fatal errors:
 
 ### Retriable Errors
 

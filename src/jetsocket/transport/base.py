@@ -1,4 +1,4 @@
-"""Base transport protocol for WSFabric.
+"""Base transport protocol for JetSocket.
 
 This module defines the abstract interface that all transports must implement,
 ensuring consistency between async and sync implementations.
@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from wsfabric.types import Frame
+    from jetsocket.types import Frame
 
 
 @runtime_checkable

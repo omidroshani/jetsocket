@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from wsfabric.heartbeat import HeartbeatConfig, HeartbeatManager
+from jetsocket.heartbeat import HeartbeatConfig, HeartbeatManager
 
 
 class TestHeartbeatConfig:

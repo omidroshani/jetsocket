@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from wsfabric.events import (
+from jetsocket.events import (
     ClosedEvent,
     ClosingEvent,
     ConnectedEvent,
@@ -22,7 +22,7 @@ from wsfabric.events import (
     ReconnectingEvent,
     StateChangeEvent,
 )
-from wsfabric.state import ConnectionState
+from jetsocket.state import ConnectionState
 
 
 class TestConnectingEvent:

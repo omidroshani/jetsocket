@@ -6,8 +6,8 @@ import base64
 
 import pytest
 
-from wsfabric._core import Handshake, generate_key, validate_accept
-from wsfabric._core import (  
+from jetsocket._core import Handshake, generate_key, validate_accept
+from jetsocket._core import (  
         Handshake,
         generate_key,
         validate_accept,

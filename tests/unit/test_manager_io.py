@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import asyncio
 
-from wsfabric.buffer import BufferConfig
-from wsfabric.manager import WebSocket
-from wsfabric.state import ConnectionState
+from jetsocket.buffer import BufferConfig
+from jetsocket.manager import WebSocket
+from jetsocket.state import ConnectionState
 
 
 class TestManagerIO:
@@ -131,7 +131,7 @@ class TestSyncClientIO:
 
     def test_connect_send_recv(self, live_server_url: str) -> None:
         """Test basic sync client usage."""
-        from wsfabric.sync_client import SyncWebSocket
+        from jetsocket.sync_client import SyncWebSocket
 
         client = SyncWebSocket(
             live_server_url,
@@ -149,7 +149,7 @@ class TestSyncClientIO:
 
     def test_stats(self, live_server_url: str) -> None:
         """Test sync client stats."""
-        from wsfabric.sync_client import SyncWebSocket
+        from jetsocket.sync_client import SyncWebSocket
 
         client = SyncWebSocket(
             live_server_url,
@@ -168,7 +168,7 @@ class TestSyncClientIO:
 
     def test_multiple_messages(self, live_server_url: str) -> None:
         """Test sending and receiving multiple messages."""
-        from wsfabric.sync_client import SyncWebSocket
+        from jetsocket.sync_client import SyncWebSocket
 
         client = SyncWebSocket(
             live_server_url,
@@ -186,7 +186,7 @@ class TestSyncClientIO:
 
     def test_context_manager(self, live_server_url: str) -> None:
         """Test sync client context manager."""
-        from wsfabric.sync_client import SyncWebSocket
+        from jetsocket.sync_client import SyncWebSocket
 
         with SyncWebSocket(
             live_server_url,

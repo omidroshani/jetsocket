@@ -1,10 +1,10 @@
-"""Tests for wsfabric.exceptions module."""
+"""Tests for jetsocket.exceptions module."""
 
 from __future__ import annotations
 
 import pytest
 
-from wsfabric.exceptions import (
+from jetsocket.exceptions import (
     BufferOverflowError,
     CloseError,
     ConnectionError,
@@ -12,7 +12,7 @@ from wsfabric.exceptions import (
     InvalidStateError,
     ProtocolError,
     TimeoutError,
-    WSFabricError,
+    JetSocketError,
 )
 
 
@@ -20,7 +20,7 @@ class TestExceptionHierarchy:
     """Tests for exception inheritance."""
 
     def test_all_inherit_from_base(self) -> None:
-        """Test that all exceptions inherit from WSFabricError."""
+        """Test that all exceptions inherit from JetSocketError."""
         exceptions = [
             ConnectionError("test"),
             ProtocolError("test"),
@@ -31,15 +31,15 @@ class TestExceptionHierarchy:
             InvalidStateError("test", current_state="idle"),
         ]
         for exc in exceptions:
-            assert isinstance(exc, WSFabricError)
+            assert isinstance(exc, JetSocketError)
             assert isinstance(exc, Exception)
 
     def test_catch_all_with_base(self) -> None:
         """Test that base exception catches all library exceptions."""
-        with pytest.raises(WSFabricError):
+        with pytest.raises(JetSocketError):
             raise ConnectionError("connection failed")
 
-        with pytest.raises(WSFabricError):
+        with pytest.raises(JetSocketError):
             raise ProtocolError("invalid frame")
 
 

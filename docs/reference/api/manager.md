@@ -2,7 +2,7 @@
 
 The core async WebSocket client with automatic reconnection, heartbeat, and message buffering.
 
-::: wsfabric.manager.WebSocket
+::: jetsocket.manager.WebSocket
     options:
       show_source: true
       members:
@@ -23,7 +23,7 @@ The core async WebSocket client with automatic reconnection, heartbeat, and mess
 WebSocket accepts several configuration objects:
 
 ```python
-from wsfabric import (
+from jetsocket import (
     WebSocket,
     BackoffConfig,
     HeartbeatConfig,
@@ -71,7 +71,7 @@ async def on_message(event):
 
 ```python
 import asyncio
-from wsfabric import WebSocket, HeartbeatConfig
+from jetsocket import WebSocket, HeartbeatConfig
 
 async def main():
     async with WebSocket(

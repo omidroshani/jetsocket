@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from wsfabric.backoff import BackoffConfig
-from wsfabric.events import (
+from jetsocket.backoff import BackoffConfig
+from jetsocket.events import (
     ConnectedEvent,
     ConnectingEvent,
     DisconnectedEvent,
@@ -17,11 +17,11 @@ from wsfabric.events import (
     MessageEvent,
     StateChangeEvent,
 )
-from wsfabric.exceptions import ConnectionError, HandshakeError, InvalidStateError
-from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.manager import WebSocket
-from wsfabric.state import ConnectionState
-from wsfabric.types import CloseCode, Frame, Opcode
+from jetsocket.exceptions import ConnectionError, HandshakeError, InvalidStateError
+from jetsocket.heartbeat import HeartbeatConfig
+from jetsocket.manager import WebSocket
+from jetsocket.state import ConnectionState
+from jetsocket.types import CloseCode, Frame, Opcode
 
 
 class TestWebSocketInit:
@@ -216,7 +216,7 @@ class TestWebSocketWithMockedTransport:
         # Make recv raise to stop the message loop
         mock_transport.recv.side_effect = ConnectionError("Test stop")
 
-        with patch("wsfabric.manager.AsyncTransport", return_value=mock_transport):
+        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport):
             await ws.connect()
             # Give the message loop a chance to start and stop
             await asyncio.sleep(0.05)
@@ -241,7 +241,7 @@ class TestWebSocketWithMockedTransport:
         mock_transport = AsyncMock()
         mock_transport.connect.side_effect = ConnectionError("Failed")
 
-        with patch("wsfabric.manager.AsyncTransport", return_value=mock_transport):
+        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport):
             with pytest.raises(ConnectionError):
                 await ws.connect()
 
@@ -285,7 +285,7 @@ class TestWebSocketWithMockedTransport:
         mock_transport._extensions = []
         mock_transport.recv = blocking_recv
 
-        with patch("wsfabric.manager.AsyncTransport", return_value=mock_transport):
+        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport):
             await ws.connect()
             # Now close while still connected
             await ws.close()
@@ -386,7 +386,7 @@ class TestWebSocketContextManager:
         mock_transport._extensions = []
         mock_transport.recv.side_effect = ConnectionError("Test stop")
 
-        with patch("wsfabric.manager.AsyncTransport", return_value=mock_transport):
+        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport):
             async with ws:
                 # State may have changed due to message loop error, but was connected
                 pass
@@ -547,7 +547,7 @@ class TestWebSocketHeartbeat:
         mock_transport._extensions = []
         mock_transport.recv.side_effect = ConnectionError("Test stop")
 
-        with patch("wsfabric.manager.AsyncTransport", return_value=mock_transport):
+        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport):
             await ws.connect()
             # Heartbeat starts but may stop quickly due to recv error
             heartbeat = ws._heartbeat
@@ -576,7 +576,7 @@ class TestWebSocketHeartbeat:
         mock_transport._extensions = []
         mock_transport.recv = blocking_recv
 
-        with patch("wsfabric.manager.AsyncTransport", return_value=mock_transport):
+        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport):
             await ws.connect()
             await ws.close()
             recv_event.set()
@@ -619,7 +619,7 @@ class TestWebSocketMessageLoop:
         mock_transport._extensions = []
         mock_transport.recv = mock_recv
 
-        with patch("wsfabric.manager.AsyncTransport", return_value=mock_transport):
+        with patch("jetsocket.manager.AsyncTransport", return_value=mock_transport):
             await ws.connect()
             # Wait for message to be processed
             await asyncio.sleep(0.1)

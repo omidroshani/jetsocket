@@ -1,17 +1,17 @@
-# WSFabric
+# JetSocket
 
 Production-grade, resilient WebSocket library for Python with Cython-powered performance.
 
-Every existing Python WebSocket library gives you a raw pipe. WSFabric gives you a production-grade client with automatic reconnection, heartbeat management, message buffering, and multiplexing — with a Cython-optimized core that beats websockets by 20-30%.
+Every existing Python WebSocket library gives you a raw pipe. JetSocket gives you a production-grade client with automatic reconnection, heartbeat management, message buffering, and multiplexing — with a Cython-optimized core that beats websockets by 20-30%.
 
 ## Quick Start
 
 ```python
 import asyncio
-import wsfabric
+import jetsocket
 
 async def main():
-    async with wsfabric.connect("wss://example.com/ws") as ws:
+    async with jetsocket.connect("wss://example.com/ws") as ws:
         await ws.send({"subscribe": "trades"})
         async for message in ws:
             print(message)
@@ -22,14 +22,14 @@ asyncio.run(main())
 ## Installation
 
 ```bash
-pip install wsfabric
+pip install jetsocket
 ```
 
 With optional extras:
 
 ```bash
-pip install wsfabric[pydantic]   # Typed messages with Pydantic
-pip install wsfabric[all]        # All extras
+pip install jetsocket[pydantic]   # Typed messages with Pydantic
+pip install jetsocket[all]        # All extras
 ```
 
 ## Features
@@ -48,7 +48,7 @@ pip install wsfabric[all]        # All extras
 ### Async (primary API)
 
 ```python
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 async with WebSocket("wss://stream.example.com/ws", reconnect=True) as ws:
     await ws.send({"subscribe": "trades"})
@@ -59,7 +59,7 @@ async with WebSocket("wss://stream.example.com/ws", reconnect=True) as ws:
 ### Sync
 
 ```python
-from wsfabric import SyncWebSocket
+from jetsocket import SyncWebSocket
 
 with SyncWebSocket("wss://stream.example.com/ws") as ws:
     ws.send({"subscribe": "trades"})
@@ -74,7 +74,7 @@ with SyncWebSocket("wss://stream.example.com/ws") as ws:
 ws = WebSocket("wss://...", heartbeat=20.0, buffer=1000)
 
 # Advanced: full config object
-from wsfabric import HeartbeatConfig, BufferConfig
+from jetsocket import HeartbeatConfig, BufferConfig
 ws = WebSocket("wss://...",
     heartbeat=HeartbeatConfig(interval=20.0, timeout=10.0),
     buffer=BufferConfig(capacity=10_000, overflow_policy="drop_oldest"),
@@ -85,7 +85,7 @@ ws = WebSocket("wss://...",
 
 ```python
 from pydantic import BaseModel
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 class Trade(BaseModel):
     symbol: str
@@ -100,7 +100,7 @@ async with WebSocket("wss://...", message_type=Trade) as ws:
 ### Multiplexing
 
 ```python
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 async with Multiplex(
     "wss://stream.binance.com/ws",
@@ -118,7 +118,7 @@ async with Multiplex(
 ### Presets
 
 ```python
-from wsfabric.presets import trading, llm_stream
+from jetsocket.presets import trading, llm_stream
 
 # Optimized for crypto exchanges
 ws = trading("wss://stream.binance.com/ws")
@@ -162,7 +162,7 @@ graph TB
 ## Development
 
 ```bash
-git clone https://github.com/omid/wsfabric && cd wsfabric
+git clone https://github.com/omid/jetsocket && cd jetsocket
 uv sync && make build
 uv run pytest                    # Run tests
 uv run mypy src/ && uv run ruff check .  # Type check + lint

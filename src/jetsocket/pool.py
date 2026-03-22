@@ -1,4 +1,4 @@
-"""Connection pool for WSFabric.
+"""Connection pool for JetSocket.
 
 This module provides connection pooling for WebSocket connections,
 allowing efficient reuse of connections and management of multiple
@@ -19,9 +19,9 @@ from typing import (
 )
 from urllib.parse import urljoin, urlparse
 
-from wsfabric.exceptions import InvalidStateError, PoolClosedError, PoolExhaustedError
-from wsfabric.manager import WebSocket
-from wsfabric.state import ConnectionState
+from jetsocket.exceptions import InvalidStateError, PoolClosedError, PoolExhaustedError
+from jetsocket.manager import WebSocket
+from jetsocket.state import ConnectionState
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -457,13 +457,13 @@ class ConnectionPool(Generic[T]):
         # Start background health check
         self._health_check_task = asyncio.create_task(
             self._health_check_loop(),
-            name="wsfabric-pool-health-check",
+            name="jetsocket-pool-health-check",
         )
 
         # Start background cleanup
         self._cleanup_task = asyncio.create_task(
             self._cleanup_loop(),
-            name="wsfabric-pool-cleanup",
+            name="jetsocket-pool-cleanup",
         )
 
         return self

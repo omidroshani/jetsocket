@@ -12,7 +12,7 @@ import asyncio
 
 from pydantic import BaseModel, Field
 
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 
 class BinanceTrade(BaseModel):

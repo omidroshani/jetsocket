@@ -6,7 +6,7 @@ import ssl
 
 import pytest
 
-from wsfabric.transport.base import create_default_ssl_context
+from jetsocket.transport.base import create_default_ssl_context
 
 
 @pytest.mark.security

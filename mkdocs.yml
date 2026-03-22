@@ -1,8 +1,8 @@
-site_name: WSFabric
+site_name: JetSocket
 site_description: Production-grade, resilient WebSocket library for Python
-site_url: https://wsfabric.dev
-repo_url: https://github.com/wsfabric/wsfabric
-repo_name: wsfabric
+site_url: https://jetsocket.dev
+repo_url: https://github.com/jetsocket/jetsocket
+repo_name: jetsocket
 
 theme:
   name: material
@@ -121,9 +121,9 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/wsfabric/wsfabric
+      link: https://github.com/jetsocket/jetsocket
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/wsfabric/
+      link: https://pypi.org/project/jetsocket/
 
 extra_css:
   - assets/stylesheets/extra.css

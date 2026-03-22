@@ -1,12 +1,12 @@
 # Configuration
 
-WSFabric uses dataclasses for type-safe configuration.
+JetSocket uses dataclasses for type-safe configuration.
 
 ## BackoffConfig
 
 Controls reconnection backoff behavior.
 
-::: wsfabric.backoff.BackoffConfig
+::: jetsocket.backoff.BackoffConfig
     options:
       show_source: true
 
@@ -24,7 +24,7 @@ Controls reconnection backoff behavior.
 ### Example
 
 ```python
-from wsfabric import BackoffConfig
+from jetsocket import BackoffConfig
 
 # Aggressive reconnect for trading
 backoff = BackoffConfig(
@@ -48,7 +48,7 @@ backoff = BackoffConfig(
 
 Controls ping/pong heartbeat behavior.
 
-::: wsfabric.heartbeat.HeartbeatConfig
+::: jetsocket.heartbeat.HeartbeatConfig
     options:
       show_source: true
 
@@ -66,7 +66,7 @@ Controls ping/pong heartbeat behavior.
 ### Example
 
 ```python
-from wsfabric import HeartbeatConfig
+from jetsocket import HeartbeatConfig
 
 # Standard WebSocket ping
 heartbeat = HeartbeatConfig(interval=20.0, timeout=10.0)
@@ -86,7 +86,7 @@ heartbeat = HeartbeatConfig(
 
 Controls message buffering behavior.
 
-::: wsfabric.buffer.BufferConfig
+::: jetsocket.buffer.BufferConfig
     options:
       show_source: true
 
@@ -102,7 +102,7 @@ Controls message buffering behavior.
 ### Example
 
 ```python
-from wsfabric import BufferConfig
+from jetsocket import BufferConfig
 
 # Trading: large buffer with dedup
 buffer = BufferConfig(
@@ -123,7 +123,7 @@ buffer = BufferConfig(
 
 Controls replay-on-reconnect behavior.
 
-::: wsfabric.buffer.ReplayConfig
+::: jetsocket.buffer.ReplayConfig
     options:
       show_source: true
 
@@ -138,7 +138,7 @@ Controls replay-on-reconnect behavior.
 ### Example
 
 ```python
-from wsfabric import ReplayConfig
+from jetsocket import ReplayConfig
 
 async def request_replay(last_seq):
     await ws.send({"action": "replay", "from": last_seq})
@@ -154,7 +154,7 @@ replay = ReplayConfig(
 
 Controls connection pool behavior.
 
-::: wsfabric.pool.ConnectionPoolConfig
+::: jetsocket.pool.ConnectionPoolConfig
     options:
       show_source: true
 
@@ -170,7 +170,7 @@ Controls connection pool behavior.
 ### Example
 
 ```python
-from wsfabric import ConnectionPoolConfig
+from jetsocket import ConnectionPoolConfig
 
 config = ConnectionPoolConfig(
     max_connections=20,

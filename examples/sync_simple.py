@@ -8,7 +8,7 @@ This example demonstrates:
 
 from __future__ import annotations
 
-from wsfabric import HeartbeatConfig, SyncWebSocket
+from jetsocket import HeartbeatConfig, SyncWebSocket
 
 
 def fetch_prices(symbols: list[str], count: int = 5) -> dict[str, list[float]]:

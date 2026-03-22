@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from wsfabric.state import ConnectionState
-from wsfabric.stats import ConnectionStats, _MutableStats
+from jetsocket.state import ConnectionState
+from jetsocket.stats import ConnectionStats, _MutableStats
 
 
 class TestConnectionStats:

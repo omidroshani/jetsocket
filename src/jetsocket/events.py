@@ -1,4 +1,4 @@
-"""Event system for WSFabric.
+"""Event system for JetSocket.
 
 This module provides a decorator-based event system for handling WebSocket
 lifecycle events. Events are emitted at key points during connection management.
@@ -20,7 +20,7 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from wsfabric.state import ConnectionState
+    from jetsocket.state import ConnectionState
 
 # Event type literal for type safety
 EventType = Literal[

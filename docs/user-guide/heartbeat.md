@@ -1,11 +1,11 @@
 # Heartbeat Management
 
-WSFabric handles WebSocket ping/pong automatically to prevent idle disconnections.
+JetSocket handles WebSocket ping/pong automatically to prevent idle disconnections.
 
 ## Basic Configuration
 
 ```python
-from wsfabric import WebSocket, HeartbeatConfig
+from jetsocket import WebSocket, HeartbeatConfig
 
 ws = WebSocket(
     "wss://example.com/ws",
@@ -18,7 +18,7 @@ ws = WebSocket(
 
 ## How It Works
 
-1. WSFabric sends a WebSocket ping frame every `interval` seconds
+1. JetSocket sends a WebSocket ping frame every `interval` seconds
 2. If no pong is received within `timeout` seconds, the connection is considered dead
 3. The connection is closed and reconnection is triggered (if enabled)
 
@@ -60,7 +60,7 @@ async def on_pong(event):
 
 ## Application-Level Heartbeat
 
-Some services use application-level ping/pong messages instead of WebSocket frames. WSFabric supports custom pong detection:
+Some services use application-level ping/pong messages instead of WebSocket frames. JetSocket supports custom pong detection:
 
 ```python
 heartbeat = HeartbeatConfig(

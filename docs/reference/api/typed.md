@@ -2,7 +2,7 @@
 
 WebSocket client with Pydantic message validation via the `message_type` parameter.
 
-::: wsfabric.typed.TypedWebSocket
+::: jetsocket.typed.TypedWebSocket
     options:
       show_source: true
       members:
@@ -15,7 +15,7 @@ WebSocket client with Pydantic message validation via the `message_type` paramet
 Typed messages require Pydantic:
 
 ```bash
-pip install wsfabric[pydantic]
+pip install jetsocket[pydantic]
 # or
 pip install pydantic
 ```
@@ -24,7 +24,7 @@ pip install pydantic
 
 ```python
 from pydantic import BaseModel
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 class TradeMessage(BaseModel):
     symbol: str

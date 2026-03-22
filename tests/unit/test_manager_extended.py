@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from wsfabric.backoff import BackoffConfig
-from wsfabric.buffer import BufferConfig
-from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.manager import WebSocket
-from wsfabric.state import ConnectionState
+from jetsocket.backoff import BackoffConfig
+from jetsocket.buffer import BufferConfig
+from jetsocket.heartbeat import HeartbeatConfig
+from jetsocket.manager import WebSocket
+from jetsocket.state import ConnectionState
 
 
 class TestManagerProperties:
@@ -41,7 +41,7 @@ class TestManagerSendErrors:
     async def test_send_when_not_connected_raises(self) -> None:
         """Test send raises when not connected."""
         ws = WebSocket("ws://example.com/ws")
-        from wsfabric.exceptions import InvalidStateError
+        from jetsocket.exceptions import InvalidStateError
 
         with pytest.raises(InvalidStateError):
             await ws.send({"test": "data"})
@@ -49,7 +49,7 @@ class TestManagerSendErrors:
     async def test_send_raw_when_not_connected_raises(self) -> None:
         """Test send_raw raises when not connected."""
         ws = WebSocket("ws://example.com/ws")
-        from wsfabric.exceptions import InvalidStateError
+        from jetsocket.exceptions import InvalidStateError
 
         with pytest.raises(InvalidStateError):
             await ws.send_raw(b"test")

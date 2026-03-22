@@ -1,6 +1,6 @@
 # Events
 
-WSFabric uses an event-driven architecture for connection lifecycle and message handling.
+JetSocket uses an event-driven architecture for connection lifecycle and message handling.
 
 ## Event Types
 
@@ -40,7 +40,7 @@ WSFabric uses an event-driven architecture for connection lifecycle and message 
 Use the `@ws.on()` decorator:
 
 ```python
-from wsfabric import WebSocket
+from jetsocket import WebSocket
 
 ws = WebSocket("wss://example.com/ws")
 

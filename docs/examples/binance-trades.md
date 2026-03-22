@@ -12,7 +12,7 @@ This example demonstrates how to stream real-time trade data from Binance using 
 ## Prerequisites
 
 ```bash
-pip install wsfabric pydantic
+pip install jetsocket pydantic
 ```
 
 ## Full Code
@@ -25,7 +25,7 @@ from __future__ import annotations
 import asyncio
 from pydantic import BaseModel, Field
 
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 
 class BinanceTrade(BaseModel):
@@ -152,7 +152,7 @@ btc_depth = await mux.subscribe("btcusdt@depth20@100ms")
 ### Using the Trading Preset
 
 ```python
-from wsfabric.presets import trading
+from jetsocket.presets import trading
 
 ws = trading("wss://stream.binance.com:9443/ws")
 ```

@@ -2,7 +2,7 @@
 
 Manages multiple logical subscriptions over a single WebSocket connection.
 
-::: wsfabric.multiplex.Multiplex
+::: jetsocket.multiplex.Multiplex
     options:
       show_source: true
       members:
@@ -15,7 +15,7 @@ Manages multiple logical subscriptions over a single WebSocket connection.
         - list_subscriptions
         - stats
 
-::: wsfabric.multiplex.Subscription
+::: jetsocket.multiplex.Subscription
     options:
       show_source: true
       members:
@@ -28,7 +28,7 @@ Manages multiple logical subscriptions over a single WebSocket connection.
 ## Usage
 
 ```python
-from wsfabric import Multiplex
+from jetsocket import Multiplex
 
 async with Multiplex(
     "wss://stream.binance.com/ws",

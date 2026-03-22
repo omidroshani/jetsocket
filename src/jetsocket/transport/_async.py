@@ -13,19 +13,19 @@ import socket
 import ssl
 from typing import TYPE_CHECKING, Any
 
-from wsfabric.exceptions import (
+from jetsocket.exceptions import (
     ConnectionError,
     HandshakeError,
     ProtocolError,
     TimeoutError,
 )
-from wsfabric.transport.base import (
+from jetsocket.transport.base import (
     AbstractTransport,
     BaseTransportConfig,
     create_default_ssl_context,
 )
-from wsfabric.transport.uri import WebSocketURI, parse_uri
-from wsfabric.types import CloseCode, Frame, Opcode
+from jetsocket.transport.uri import WebSocketURI, parse_uri
+from jetsocket.types import CloseCode, Frame, Opcode
 
 if TYPE_CHECKING:
     pass
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 # Type alias for resolved addresses
 ResolvedAddress = tuple[socket.AddressFamily, str]
 
-from wsfabric._core import Deflater, FrameParser, Handshake, parse_deflate_params
+from jetsocket._core import Deflater, FrameParser, Handshake, parse_deflate_params
 
 # Sentinel for connection lost
 _CONNECTION_LOST = object()

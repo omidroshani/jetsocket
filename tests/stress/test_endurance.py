@@ -7,9 +7,9 @@ import time
 
 import pytest
 
-from wsfabric.transport import AsyncTransport, BaseTransportConfig
+from jetsocket.transport import AsyncTransport, BaseTransportConfig
 
-DURATION = int(os.environ.get("WSFABRIC_STRESS_DURATION", "5"))
+DURATION = int(os.environ.get("JETSOCKET_STRESS_DURATION", "5"))
 
 
 @pytest.mark.stress

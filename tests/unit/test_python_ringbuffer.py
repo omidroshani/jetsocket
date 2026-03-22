@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from wsfabric.buffer import _PythonRingBuffer
+from jetsocket.buffer import _PythonRingBuffer
 
 
 class TestPythonRingBuffer:

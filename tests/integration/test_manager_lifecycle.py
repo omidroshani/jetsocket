@@ -13,8 +13,8 @@ import pytest
 import websockets.server
 from websockets.frames import CloseCode as WsCloseCode
 
-from wsfabric.backoff import BackoffConfig
-from wsfabric.events import (
+from jetsocket.backoff import BackoffConfig
+from jetsocket.events import (
     ClosedEvent,
     ConnectedEvent,
     ConnectingEvent,
@@ -23,8 +23,8 @@ from wsfabric.events import (
     ReconnectedEvent,
     ReconnectingEvent,
 )
-from wsfabric.manager import WebSocket
-from wsfabric.state import ConnectionState
+from jetsocket.manager import WebSocket
+from jetsocket.state import ConnectionState
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

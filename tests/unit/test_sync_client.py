@@ -9,12 +9,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from wsfabric.backoff import BackoffConfig
-from wsfabric.events import ConnectedEvent, MessageEvent
-from wsfabric.exceptions import ConnectionError, InvalidStateError, TimeoutError
-from wsfabric.heartbeat import HeartbeatConfig
-from wsfabric.state import ConnectionState
-from wsfabric.sync_client import _SHUTDOWN, SyncWebSocket
+from jetsocket.backoff import BackoffConfig
+from jetsocket.events import ConnectedEvent, MessageEvent
+from jetsocket.exceptions import ConnectionError, InvalidStateError, TimeoutError
+from jetsocket.heartbeat import HeartbeatConfig
+from jetsocket.state import ConnectionState
+from jetsocket.sync_client import _SHUTDOWN, SyncWebSocket
 
 
 class TestSyncWebSocketInit:
@@ -259,7 +259,7 @@ class TestSyncWebSocketThreading:
         mock_manager.connect = mock_connect
         mock_manager.add_handler = MagicMock()
 
-        with patch("wsfabric.sync_client.WebSocket", return_value=mock_manager):
+        with patch("jetsocket.sync_client.WebSocket", return_value=mock_manager):
             # Start connect in background but check thread name
             started = threading.Event()
 
@@ -278,12 +278,12 @@ class TestSyncWebSocketThreading:
             with patch.object(client, "_run_event_loop", patched_run):
                 try:
                     client._thread = threading.Thread(
-                        target=patched_run, name="wsfabric-sync-loop", daemon=True
+                        target=patched_run, name="jetsocket-sync-loop", daemon=True
                     )
                     client._thread.start()
                     client._started.wait(timeout=1.0)
 
-                    assert client._thread.name == "wsfabric-sync-loop"
+                    assert client._thread.name == "jetsocket-sync-loop"
                 finally:
                     client._closed = True
                     if client._thread:

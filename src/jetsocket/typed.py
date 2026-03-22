@@ -1,4 +1,4 @@
-"""Type-safe WebSocket with Pydantic support for WSFabric.
+"""Type-safe WebSocket with Pydantic support for JetSocket.
 
 This module provides TypedWebSocket, a WebSocketManager subclass that
 automatically validates incoming messages using Pydantic models.
@@ -15,7 +15,7 @@ from typing import (
     TypeVar,
 )
 
-from wsfabric.manager import WebSocket
+from jetsocket.manager import WebSocket
 
 if TYPE_CHECKING:
     from pydantic import BaseModel  # type: ignore[import-not-found]

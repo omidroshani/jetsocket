@@ -1,10 +1,10 @@
-"""Tests for wsfabric.transport.base module."""
+"""Tests for jetsocket.transport.base module."""
 
 from __future__ import annotations
 
 import ssl
 
-from wsfabric.transport.base import (
+from jetsocket.transport.base import (
     BaseTransportConfig,
     create_default_ssl_context,
 )

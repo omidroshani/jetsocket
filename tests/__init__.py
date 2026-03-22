@@ -1,1 +1,1 @@
-"""WSFabric test suite."""
+"""JetSocket test suite."""

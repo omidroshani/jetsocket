@@ -1,4 +1,4 @@
-# Security Audit — WSFabric
+# Security Audit — JetSocket
 
 **Date:** 2026-03-21
 **Scope:** TLS configuration, frame handling, input validation, DoS protection

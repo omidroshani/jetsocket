@@ -12,24 +12,24 @@ import os
 
 import pytest
 
-from wsfabric._core import (
+from jetsocket._core import (
     Deflater as FallbackDeflater,
 )
-from wsfabric._core import (
+from jetsocket._core import (
     FrameParser as FallbackFrameParser,
 )
-from wsfabric._core import (
+from jetsocket._core import (
     apply_mask as fallback_apply_mask,
 )
-from wsfabric._core import (
+from jetsocket._core import (
     validate_utf8 as fallback_validate_utf8,
 )
 
 try:
-    from wsfabric._core import Deflater as RustDeflater
-    from wsfabric._core import FrameParser as RustFrameParser
-    from wsfabric._core import apply_mask as rust_apply_mask
-    from wsfabric._core import validate_utf8 as rust_validate_utf8
+    from jetsocket._core import Deflater as RustDeflater
+    from jetsocket._core import FrameParser as RustFrameParser
+    from jetsocket._core import apply_mask as rust_apply_mask
+    from jetsocket._core import validate_utf8 as rust_validate_utf8
 
     HAS_RUST = True
 except ImportError:
@@ -83,7 +83,7 @@ class TestFrameEncodeBenchmarks:
 
     def test_fallback_encode_small(self, benchmark: object) -> None:
         """Benchmark fallback frame encoding on small payload."""
-        from wsfabric._core import Opcode
+        from jetsocket._core import Opcode
 
         parser = FallbackFrameParser()
         benchmark(parser.encode, Opcode.TEXT, SMALL, True, True)  # type: ignore[operator]
@@ -96,7 +96,7 @@ class TestFrameEncodeBenchmarks:
 
     def test_fallback_encode_large(self, benchmark: object) -> None:
         """Benchmark fallback frame encoding on large payload."""
-        from wsfabric._core import Opcode
+        from jetsocket._core import Opcode
 
         parser = FallbackFrameParser()
         benchmark(parser.encode, Opcode.BINARY, LARGE, True, True)  # type: ignore[operator]
