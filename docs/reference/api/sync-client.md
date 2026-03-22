@@ -2,7 +2,7 @@
 
 Synchronous WebSocket client that wraps the async WebSocketManager.
 
-::: wsfabric.SyncWebSocketClient
+::: wsfabric.sync_client.SyncWebSocketClient
     options:
       show_source: true
       members:

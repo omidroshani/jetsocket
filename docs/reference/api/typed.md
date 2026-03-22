@@ -2,7 +2,7 @@
 
 WebSocket client with Pydantic message validation.
 
-::: wsfabric.TypedWebSocket
+::: wsfabric.typed.TypedWebSocket
     options:
       show_source: true
       members:

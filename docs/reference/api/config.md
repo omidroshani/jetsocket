@@ -6,7 +6,7 @@ WSFabric uses dataclasses for type-safe configuration.
 
 Controls reconnection backoff behavior.
 
-::: wsfabric.BackoffConfig
+::: wsfabric.backoff.BackoffConfig
     options:
       show_source: true
 
@@ -48,7 +48,7 @@ backoff = BackoffConfig(
 
 Controls ping/pong heartbeat behavior.
 
-::: wsfabric.HeartbeatConfig
+::: wsfabric.heartbeat.HeartbeatConfig
     options:
       show_source: true
 
@@ -86,7 +86,7 @@ heartbeat = HeartbeatConfig(
 
 Controls message buffering behavior.
 
-::: wsfabric.BufferConfig
+::: wsfabric.buffer.BufferConfig
     options:
       show_source: true
 
@@ -123,7 +123,7 @@ buffer = BufferConfig(
 
 Controls replay-on-reconnect behavior.
 
-::: wsfabric.ReplayConfig
+::: wsfabric.buffer.ReplayConfig
     options:
       show_source: true
 
@@ -154,7 +154,7 @@ replay = ReplayConfig(
 
 Controls multiplexing behavior.
 
-::: wsfabric.MultiplexConfig
+::: wsfabric.multiplex.MultiplexConfig
     options:
       show_source: true
 
@@ -184,7 +184,7 @@ config = MultiplexConfig(
 
 Controls connection pool behavior.
 
-::: wsfabric.ConnectionPoolConfig
+::: wsfabric.pool.ConnectionPoolConfig
     options:
       show_source: true
 

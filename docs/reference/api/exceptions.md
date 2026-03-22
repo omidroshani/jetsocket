@@ -22,7 +22,7 @@ WSFabricError (base)
 
 ## Base Exception
 
-::: wsfabric.WSFabricError
+::: wsfabric.exceptions.WSFabricError
     options:
       show_source: false
 

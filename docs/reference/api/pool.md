@@ -2,7 +2,7 @@
 
 Connection pool for managing multiple WebSocket connections efficiently.
 
-::: wsfabric.ConnectionPool
+::: wsfabric.pool.ConnectionPool
     options:
       show_source: true
       members:
@@ -12,7 +12,7 @@ Connection pool for managing multiple WebSocket connections efficiently.
         - close
         - stats
 
-::: wsfabric.ConnectionPoolConfig
+::: wsfabric.pool.ConnectionPoolConfig
     options:
       show_source: true
 

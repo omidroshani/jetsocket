@@ -2,7 +2,7 @@
 
 Pre-configured WebSocket profiles for common use cases.
 
-::: wsfabric.Presets
+::: wsfabric.presets.Presets
     options:
       show_source: true
       members:
