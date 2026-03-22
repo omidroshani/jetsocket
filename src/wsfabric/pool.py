@@ -20,7 +20,7 @@ from typing import (
 from urllib.parse import urljoin, urlparse
 
 from wsfabric.exceptions import InvalidStateError, PoolClosedError, PoolExhaustedError
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 from wsfabric.state import ConnectionState
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ class PoolStats:
 class _PooledConnectionState:
     """Internal state for a pooled connection."""
 
-    manager: WebSocketManager[Any]
+    manager: WebSocket[Any]
     uri: str
     created_at: float = field(default_factory=time.monotonic)
     last_used_at: float = field(default_factory=time.monotonic)
@@ -112,7 +112,7 @@ class _PooledConnectionState:
 class PooledConnection(Generic[T]):
     """Wrapper for pool-managed connections.
 
-    This class wraps a WebSocketManager and provides automatic release
+    This class wraps a WebSocket and provides automatic release
     back to the pool when used as a context manager.
 
     Example:
@@ -235,7 +235,7 @@ class PooledConnection(Generic[T]):
 
 
 class ConnectionPool(Generic[T]):
-    """Pool of WebSocketManager instances.
+    """Pool of WebSocket instances.
 
     Manages multiple WebSocket connections with semaphore-based limiting,
     connection reuse, health checking, and idle cleanup.
@@ -250,7 +250,7 @@ class ConnectionPool(Generic[T]):
     Args:
         config: Pool configuration. Uses defaults if not provided.
         base_uri: Base URI for relative paths. Required for relative paths.
-        manager_kwargs: Additional kwargs to pass to WebSocketManager.
+        manager_kwargs: Additional kwargs to pass to WebSocket.
     """
 
     def __init__(
@@ -533,7 +533,7 @@ class ConnectionPool(Generic[T]):
         Returns:
             The new connection state.
         """
-        manager: WebSocketManager[T] = WebSocketManager(uri, **self._manager_kwargs)
+        manager: WebSocket[T] = WebSocket(uri, **self._manager_kwargs)
         await manager.connect()
 
         state = _PooledConnectionState(manager=manager, uri=uri)

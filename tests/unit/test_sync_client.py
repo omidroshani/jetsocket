@@ -49,7 +49,7 @@ class TestSyncWebSocketClientInit:
         client = SyncWebSocketClient("wss://example.com/ws")
         repr_str = repr(client)
 
-        assert "SyncWebSocketClient" in repr_str
+        assert "SyncWebSocket" in repr_str
         assert "wss://example.com/ws" in repr_str
         assert "idle" in repr_str
 

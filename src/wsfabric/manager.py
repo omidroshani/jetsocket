@@ -84,7 +84,7 @@ _FATAL_WS_CODES = {
 }
 
 
-class WebSocketManager(Generic[T]):
+class WebSocket(Generic[T]):
     """High-level WebSocket client with auto-reconnect and heartbeat.
 
     This is the main user-facing API for WebSocket connections. It provides:
@@ -96,7 +96,7 @@ class WebSocketManager(Generic[T]):
     - Connection statistics
 
     Example:
-        >>> ws = WebSocketManager("wss://example.com/ws")
+        >>> ws = WebSocket("wss://example.com/ws")
         >>>
         >>> @ws.on("connected")
         ... async def on_connect(event: ConnectedEvent) -> None:
@@ -137,14 +137,16 @@ class WebSocketManager(Generic[T]):
         reconnect: bool = True,
         backoff: BackoffConfig | None = None,
         max_connection_age: float | None = None,
-        # Heartbeat configuration
-        heartbeat: HeartbeatConfig | None = None,
-        # Buffer & replay configuration
-        buffer: BufferConfig | None = None,
+        # Heartbeat: float (interval) or HeartbeatConfig or None
+        heartbeat: float | HeartbeatConfig | None = None,
+        # Buffer: int (capacity) or BufferConfig or None
+        buffer: int | BufferConfig | None = None,
         replay: ReplayConfig | None = None,
         # Serialization
         serializer: Callable[[Any], bytes] | None = None,
         deserializer: Callable[[bytes], T] | None = None,
+        # Typed messages (replaces TypedWebSocket)
+        message_type: type | None = None,
         # Transport configuration
         ssl_context: ssl.SSLContext | None = None,
         extra_headers: dict[str, str] | None = None,
@@ -156,17 +158,53 @@ class WebSocketManager(Generic[T]):
         close_timeout: float = 5.0,
         max_message_size: int = 64 * 1024 * 1024,
     ) -> None:
-        """Initialize the WebSocket manager."""
+        """Initialize the WebSocket.
+
+        Args:
+            uri: The WebSocket URI to connect to.
+            reconnect: Whether to auto-reconnect on disconnect.
+            backoff: Backoff configuration for reconnection.
+            max_connection_age: Max connection age before proactive reconnect.
+            heartbeat: Heartbeat interval in seconds, or HeartbeatConfig.
+            buffer: Buffer capacity (int) or BufferConfig.
+            replay: Replay configuration for reconnection.
+            serializer: Custom message serializer.
+            deserializer: Custom message deserializer.
+            message_type: Pydantic model for typed messages (auto-configures
+                serializer/deserializer). Requires pydantic.
+            ssl_context: Custom SSL context for WSS connections.
+            extra_headers: Additional headers for the handshake.
+            subprotocols: WebSocket subprotocols to request.
+            compress: Whether to enable permessage-deflate compression.
+            compression_threshold: Minimum payload size to compress.
+            connect_timeout: Timeout for connection establishment.
+            close_timeout: Timeout for graceful close.
+            max_message_size: Maximum message size in bytes.
+        """
         self._uri = uri
         self._reconnect_enabled = reconnect
         self._backoff_config = backoff or BackoffConfig()
         self._max_connection_age = max_connection_age
-        self._heartbeat_config = heartbeat
-        self._buffer_config = buffer
-        self._replay_config = replay
-        self._serializer = serializer or _default_serializer
-        self._deserializer = deserializer or _default_deserializer
         self._close_timeout = close_timeout
+        self._message_type = message_type
+
+        # Normalize scalar shorthands
+        if isinstance(heartbeat, (int, float)):
+            heartbeat = HeartbeatConfig(interval=float(heartbeat))
+        self._heartbeat_config = heartbeat
+
+        if isinstance(buffer, int):
+            buffer = BufferConfig(capacity=buffer)
+        self._buffer_config = buffer
+
+        self._replay_config = replay
+
+        # Handle message_type (typed messages via Pydantic)
+        if message_type is not None and serializer is None and deserializer is None:
+            self._setup_typed_serialization(message_type)
+        else:
+            self._serializer = serializer or _default_serializer
+            self._deserializer = deserializer or _default_deserializer
 
         # Transport configuration
         self._transport_config = BaseTransportConfig(
@@ -206,6 +244,34 @@ class WebSocketManager(Generic[T]):
         self._attempt = 0
         self._last_error: Exception | None = None
         self._last_dropped_count = 0  # Track buffer overflow events
+
+    def _setup_typed_serialization(self, model_type: type) -> None:
+        """Configure serializer/deserializer for Pydantic model type."""
+        try:
+            from pydantic import BaseModel  # noqa: PLC0415
+        except ImportError as e:
+            raise ImportError(
+                "pydantic is required for message_type parameter. "
+                "Install it with: pip install pydantic"
+            ) from e
+
+        import json as json_mod  # noqa: PLC0415
+
+        def deserializer(data: bytes) -> Any:
+            return model_type.model_validate_json(data)  # type: ignore[union-attr]
+
+        def serializer(msg: Any) -> bytes:
+            if isinstance(msg, BaseModel):
+                return msg.model_dump_json().encode("utf-8")  # type: ignore[no-any-return]
+            return json_mod.dumps(msg).encode("utf-8")
+
+        self._serializer = serializer
+        self._deserializer = deserializer
+
+    @property
+    def message_type(self) -> type | None:
+        """Get the Pydantic message type, if configured."""
+        return self._message_type
 
     # -------------------------------------------------------------------------
     # Properties
@@ -419,7 +485,7 @@ class WebSocketManager(Generic[T]):
         This connects to the server and runs the message loop until closed.
 
         Example:
-            >>> ws = WebSocketManager("wss://example.com/ws")
+            >>> ws = WebSocket("wss://example.com/ws")
             >>> ws.run_sync()  # Blocks until closed
         """
         asyncio.run(self._run_async())
@@ -613,7 +679,7 @@ class WebSocketManager(Generic[T]):
     # Context Manager
     # -------------------------------------------------------------------------
 
-    async def __aenter__(self) -> WebSocketManager[T]:
+    async def __aenter__(self) -> WebSocket[T]:
         """Async context manager entry."""
         await self.connect()
         return self
@@ -977,3 +1043,7 @@ class WebSocketManager(Generic[T]):
     def buffer_fill_ratio(self) -> float:
         """Get the buffer fill ratio (0.0 to 1.0), or 0.0 if no buffer."""
         return self._buffer.fill_ratio if self._buffer else 0.0
+
+
+# Backward compatibility alias
+WebSocketManager = WebSocket

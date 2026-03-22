@@ -346,7 +346,7 @@ class TestMultiplexConnectionInit:
 
         repr_str = repr(mux)
 
-        assert "MultiplexConnection" in repr_str
+        assert "Multiplex" in repr_str
         assert "wss://example.com/ws" in repr_str
         assert "idle" in repr_str
 
@@ -364,7 +364,7 @@ class TestMultiplexConnectionLifecycle:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
         assert mux._manager is not None
@@ -380,7 +380,7 @@ class TestMultiplexConnectionLifecycle:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             with pytest.raises(InvalidStateError) as exc_info:
@@ -432,7 +432,7 @@ class TestMultiplexConnectionLifecycle:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             async with MultiplexConnection("wss://example.com/ws", config) as mux:
                 assert mux._manager is not None
 
@@ -455,7 +455,7 @@ class TestMultiplexConnectionSubscriptions:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             sub = await mux.subscribe("btcusdt@trade")
@@ -476,7 +476,7 @@ class TestMultiplexConnectionSubscriptions:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             sub = await mux.subscribe("btcusdt@trade")
@@ -494,7 +494,7 @@ class TestMultiplexConnectionSubscriptions:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             sub1 = await mux.subscribe("btcusdt@trade")
@@ -526,7 +526,7 @@ class TestMultiplexConnectionSubscriptions:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             sub = await mux.subscribe("btcusdt@trade")
@@ -548,7 +548,7 @@ class TestMultiplexConnectionSubscriptions:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             result = await mux.unsubscribe("btcusdt@trade")
@@ -565,7 +565,7 @@ class TestMultiplexConnectionSubscriptions:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             sub = await mux.subscribe("btcusdt@trade")
@@ -591,7 +591,7 @@ class TestMultiplexConnectionSubscriptions:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             await mux.subscribe("btcusdt@trade")
@@ -612,7 +612,7 @@ class TestMultiplexConnectionSubscriptions:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             await mux.subscribe("btcusdt@trade")
@@ -671,7 +671,7 @@ class TestMultiplexConnectionStats:
         )
         mock_manager.stats = MagicMock(return_value=mock_stats)
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             await mux.subscribe("btcusdt@trade")
@@ -711,7 +711,7 @@ class TestMultiplexConnectionRouting:
         mock_manager.send = AsyncMock()
         mock_manager.__aiter__ = lambda self: mock_iter()
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             btc_sub = await mux.subscribe("btcusdt@trade")
@@ -757,7 +757,7 @@ class TestMultiplexConnectionRouting:
         mock_manager.send = AsyncMock()
         mock_manager.__aiter__ = lambda self: mock_iter()
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             # Subscribe to btcusdt only
@@ -800,7 +800,7 @@ class TestMultiplexConnectionRouting:
         mock_manager.send = AsyncMock()
         mock_manager.__aiter__ = lambda self: mock_iter()
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             sub = await mux.subscribe("btcusdt@trade")
@@ -831,7 +831,7 @@ class TestMultiplexConnectionRouting:
         mock_manager.is_connected = True
         mock_manager.state = ConnectionState.CONNECTED
 
-        with patch("wsfabric.multiplex.WebSocketManager", return_value=mock_manager):
+        with patch("wsfabric.multiplex.WebSocket", return_value=mock_manager):
             await mux.connect()
 
             btc_sub = await mux.subscribe("btcusdt@trade")

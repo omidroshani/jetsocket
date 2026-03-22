@@ -9,10 +9,10 @@ WSFabric provides a high-performance, memory-efficient WebSocket client with:
 - Full type safety with generics
 
 Example:
-    >>> from wsfabric import WebSocketManager
+    >>> import wsfabric
     >>>
     >>> async def main():
-    ...     async with WebSocketManager("wss://example.com/ws") as ws:
+    ...     async with wsfabric.connect("wss://example.com/ws") as ws:
     ...         async for message in ws:
     ...             print(message)
 
@@ -20,78 +20,77 @@ Example:
 
 from __future__ import annotations
 
+import contextlib
 import importlib
+from collections.abc import AsyncIterator
+from typing import Any
 
 __version__ = "0.1.0"
 __all__ = [
     "BackoffConfig",
     "BufferConfig",
-    "BufferOverflowError",
-    "CloseError",
     "ConnectionError",
-    "ConnectionPool",
-    "ConnectionPoolConfig",
     "ConnectionState",
-    "ConnectionStats",
-    "Frame",
     "HandshakeError",
     "HeartbeatConfig",
     "InvalidStateError",
-    "MessageBuffer",
-    "MultiplexConfig",
+    "Multiplex",
     "MultiplexConnection",
-    "MultiplexStats",
-    "Opcode",
-    "PoolClosedError",
-    "PoolExhaustedError",
-    "PoolStats",
-    "PooledConnection",
-    "Presets",
     "ProtocolError",
-    "ReplayConfig",
-    "Subscription",
-    "SubscriptionStats",
+    "SyncWebSocket",
     "SyncWebSocketClient",
     "TimeoutError",
     "TypedWebSocket",
     "WSFabricError",
+    "WebSocket",
     "WebSocketManager",
+    "connect",
 ]
 
-# Import from submodules - lazy imports for fast startup
+# Import from submodules - eager imports for exceptions and state
 from wsfabric.exceptions import (
-    BufferOverflowError,
-    CloseError,
     ConnectionError,
     HandshakeError,
     InvalidStateError,
-    PoolClosedError,
-    PoolExhaustedError,
     ProtocolError,
     TimeoutError,
     WSFabricError,
 )
 from wsfabric.state import ConnectionState
-from wsfabric.types import Frame, Opcode
 
 # Lazy imports for heavier modules
 _lazy_imports: dict[str, str] = {
+    # Primary API (new names)
+    "WebSocket": "wsfabric.manager",
+    "SyncWebSocket": "wsfabric.sync_client",
+    "Multiplex": "wsfabric.multiplex",
+    # Configuration
     "BackoffConfig": "wsfabric.backoff",
     "BufferConfig": "wsfabric.buffer",
+    "HeartbeatConfig": "wsfabric.heartbeat",
+    # Exceptions (importable but not in __all__)
+    "BufferOverflowError": "wsfabric.exceptions",
+    "CloseError": "wsfabric.exceptions",
+    "PoolClosedError": "wsfabric.exceptions",
+    "PoolExhaustedError": "wsfabric.exceptions",
+    # Types (importable but not in __all__)
+    "Frame": "wsfabric.types",
+    "Opcode": "wsfabric.types",
+    # Advanced (importable but not in __all__)
     "ConnectionPool": "wsfabric.pool",
     "ConnectionPoolConfig": "wsfabric.pool",
     "ConnectionStats": "wsfabric.stats",
-    "HeartbeatConfig": "wsfabric.heartbeat",
     "MessageBuffer": "wsfabric.buffer",
     "MultiplexConfig": "wsfabric.multiplex",
-    "MultiplexConnection": "wsfabric.multiplex",
     "MultiplexStats": "wsfabric.multiplex",
     "PooledConnection": "wsfabric.pool",
     "PoolStats": "wsfabric.pool",
-    "Presets": "wsfabric.presets",
     "ReplayConfig": "wsfabric.buffer",
     "Subscription": "wsfabric.multiplex",
     "SubscriptionStats": "wsfabric.multiplex",
+    # Backward compatibility aliases
+    "MultiplexConnection": "wsfabric.multiplex",
+    "Presets": "wsfabric.presets",
     "SyncWebSocketClient": "wsfabric.sync_client",
     "TypedWebSocket": "wsfabric.typed",
     "WebSocketManager": "wsfabric.manager",
@@ -105,3 +104,33 @@ def __getattr__(name: str) -> object:
         return getattr(module, name)
     msg = f"module {__name__!r} has no attribute {name!r}"
     raise AttributeError(msg)
+
+
+@contextlib.asynccontextmanager
+async def connect(uri: str, **kwargs: Any) -> AsyncIterator[Any]:
+    """Connect to a WebSocket server.
+
+    Convenience function that creates a WebSocket, connects it, and
+    yields it as an async context manager.
+
+    Args:
+        uri: The WebSocket URI to connect to.
+        **kwargs: Additional arguments passed to WebSocket.
+
+    Yields:
+        A connected WebSocket instance.
+
+    Example:
+        >>> async with wsfabric.connect("wss://example.com/ws") as ws:
+        ...     await ws.send({"hello": "world"})
+        ...     msg = await ws.recv()
+    """
+    # Import here to avoid circular import at module level
+    from wsfabric.manager import WebSocket  # noqa: PLC0415
+
+    ws: WebSocket[Any] = WebSocket(uri, **kwargs)
+    await ws.connect()
+    try:
+        yield ws
+    finally:
+        await ws.close()

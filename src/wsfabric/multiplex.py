@@ -18,7 +18,7 @@ from typing import (
 )
 
 from wsfabric.exceptions import InvalidStateError, TimeoutError
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 from wsfabric.state import ConnectionState
 from wsfabric.stats import ConnectionStats
 
@@ -113,14 +113,14 @@ class Subscription(Generic[T]):
         self,
         channel: str,
         queue: asyncio.Queue[T | None],
-        mux: MultiplexConnection[T],
+        mux: Multiplex[T],
     ) -> None:
         """Initialize a subscription.
 
         Args:
             channel: The channel name.
             queue: The message queue for this subscription.
-            mux: The parent MultiplexConnection.
+            mux: The parent Multiplex.
         """
         self._channel = channel
         self._queue = queue
@@ -220,7 +220,7 @@ class Subscription(Generic[T]):
             raise StopAsyncIteration from None
 
 
-class MultiplexConnection(Generic[T]):
+class Multiplex(Generic[T]):
     """Manages multiple logical subscriptions over a single WebSocket.
 
     Routes incoming messages to the appropriate subscription queue based
@@ -235,7 +235,7 @@ class MultiplexConnection(Generic[T]):
         ...         "params": [ch],
         ...     },
         ... )
-        >>> async with MultiplexConnection(
+        >>> async with Multiplex(
         ...     "wss://stream.binance.com/ws", config
         ... ) as mux:
         ...     btc = await mux.subscribe("btcusdt@trade")
@@ -247,23 +247,62 @@ class MultiplexConnection(Generic[T]):
     def __init__(
         self,
         uri: str,
-        config: MultiplexConfig,
+        config: MultiplexConfig | None = None,
         *,
+        # Flattened config kwargs (alternative to config=)
+        channel_key: str | None = None,
+        channel_extractor: Callable[[Any], str | None] | None = None,
+        subscribe_msg: Callable[[str], Any] | None = None,
+        unsubscribe_msg: Callable[[str], Any] | None = None,
+        queue_size: int = 1000,
+        # Backward compat
         manager_kwargs: dict[str, Any] | None = None,
+        # WebSocket kwargs (forwarded to internal WebSocket)
+        **ws_kwargs: Any,
     ) -> None:
         """Initialize multiplexed connection.
 
         Args:
             uri: WebSocket URI.
-            config: Multiplex configuration.
-            manager_kwargs: Additional kwargs passed to WebSocketManager.
+            config: Multiplex configuration (legacy, use kwargs instead).
+            channel_key: Dict key to extract channel name (e.g. "stream").
+            channel_extractor: Function to extract channel from message.
+            subscribe_msg: Function to build subscribe message for a channel.
+            unsubscribe_msg: Function to build unsubscribe message.
+            queue_size: Max messages per subscription queue.
+            manager_kwargs: Legacy kwargs passed to WebSocket.
+            **ws_kwargs: Additional kwargs passed to internal WebSocket
+                (heartbeat, reconnect, buffer, etc.)
         """
         self._uri = uri
-        self._config = config
-        self._manager_kwargs = manager_kwargs or {}
+
+        # Build config from kwargs or use provided config
+        if config is not None:
+            self._config = config
+        elif channel_extractor is not None:
+            self._config = MultiplexConfig(
+                channel_extractor=channel_extractor,
+                subscribe_message=subscribe_msg,
+                unsubscribe_message=unsubscribe_msg,
+                queue_size=queue_size,
+            )
+        elif channel_key is not None:
+            self._config = MultiplexConfig(
+                channel_extractor=lambda msg, _k=channel_key: msg.get(_k)
+                if isinstance(msg, dict)
+                else None,
+                subscribe_message=subscribe_msg,
+                unsubscribe_message=unsubscribe_msg,
+                queue_size=queue_size,
+            )
+        else:
+            msg = "Either 'config', 'channel_key', or 'channel_extractor' is required"
+            raise ValueError(msg)
+
+        self._manager_kwargs = {**(manager_kwargs or {}), **ws_kwargs}
 
         # Will be created on connect
-        self._manager: WebSocketManager[T] | None = None
+        self._manager: WebSocket[T] | None = None
 
         # Subscriptions by channel name
         self._subscriptions: dict[str, Subscription[T]] = {}
@@ -318,7 +357,7 @@ class MultiplexConnection(Generic[T]):
             )
 
         # Create manager
-        self._manager = WebSocketManager(self._uri, **self._manager_kwargs)
+        self._manager = WebSocket(self._uri, **self._manager_kwargs)
 
         # Connect
         await self._manager.connect()
@@ -489,7 +528,7 @@ class MultiplexConnection(Generic[T]):
         """Route incoming messages to subscription queues.
 
         This runs as a background task, consuming messages from the
-        WebSocketManager and routing them to the correct subscription
+        WebSocket and routing them to the correct subscription
         queue based on channel_extractor.
         """
         if self._manager is None:
@@ -526,7 +565,7 @@ class MultiplexConnection(Generic[T]):
         except asyncio.CancelledError:
             pass
 
-    async def __aenter__(self) -> MultiplexConnection[T]:
+    async def __aenter__(self) -> Multiplex[T]:
         """Context manager entry."""
         await self.connect()
         return self
@@ -544,6 +583,10 @@ class MultiplexConnection(Generic[T]):
         """Return string representation."""
         active = sum(1 for sub in self._subscriptions.values() if sub.is_active)
         return (
-            f"MultiplexConnection(uri={self._uri!r}, "
+            f"Multiplex(uri={self._uri!r}, "
             f"state={self.state.value}, subscriptions={active})"
         )
+
+
+# Backward compatibility alias
+MultiplexConnection = Multiplex

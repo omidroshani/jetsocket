@@ -45,7 +45,7 @@ T = TypeVar("T")
 _SHUTDOWN = object()
 
 # Track all active sync clients for cleanup at exit
-_active_clients: weakref.WeakSet[SyncWebSocketClient[Any]] = weakref.WeakSet()
+_active_clients: weakref.WeakSet[SyncWebSocket[Any]] = weakref.WeakSet()
 
 
 def _cleanup_clients() -> None:
@@ -58,7 +58,7 @@ def _cleanup_clients() -> None:
 atexit.register(_cleanup_clients)
 
 
-class SyncWebSocketClient(Generic[T]):
+class SyncWebSocket(Generic[T]):
     """Synchronous WebSocket client with full feature parity.
 
     Wraps WebSocketManager with a background event loop thread, providing
@@ -66,7 +66,7 @@ class SyncWebSocketClient(Generic[T]):
     the async API including reconnection, heartbeat, buffering, and events.
 
     Example:
-        >>> with SyncWebSocketClient("wss://example.com/ws") as ws:
+        >>> with SyncWebSocket("wss://example.com/ws") as ws:
         ...     ws.send({"subscribe": "trades"})
         ...     for msg in ws:
         ...         print(msg)
@@ -98,14 +98,16 @@ class SyncWebSocketClient(Generic[T]):
         reconnect: bool = True,
         backoff: BackoffConfig | None = None,
         max_connection_age: float | None = None,
-        # Heartbeat configuration
-        heartbeat: HeartbeatConfig | None = None,
-        # Buffer & replay configuration
-        buffer: BufferConfig | None = None,
+        # Heartbeat: float (interval) or HeartbeatConfig or None
+        heartbeat: float | HeartbeatConfig | None = None,
+        # Buffer: int (capacity) or BufferConfig or None
+        buffer: int | BufferConfig | None = None,
         replay: ReplayConfig | None = None,
         # Serialization
         serializer: Callable[[Any], bytes] | None = None,
         deserializer: Callable[[bytes], T] | None = None,
+        # Typed messages
+        message_type: type | None = None,
         # Transport configuration
         ssl_context: ssl.SSLContext | None = None,
         extra_headers: dict[str, str] | None = None,
@@ -117,7 +119,7 @@ class SyncWebSocketClient(Generic[T]):
         close_timeout: float = 5.0,
         max_message_size: int = 64 * 1024 * 1024,
     ) -> None:
-        """Initialize the synchronous WebSocket client."""
+        """Initialize the synchronous WebSocket."""
         self._uri = uri
         self._manager_kwargs: dict[str, Any] = {
             "reconnect": reconnect,
@@ -128,6 +130,7 @@ class SyncWebSocketClient(Generic[T]):
             "replay": replay,
             "serializer": serializer,
             "deserializer": deserializer,
+            "message_type": message_type,
             "ssl_context": ssl_context,
             "extra_headers": extra_headers,
             "subprotocols": subprotocols,
@@ -506,7 +509,7 @@ class SyncWebSocketClient(Generic[T]):
     # Context Manager
     # -------------------------------------------------------------------------
 
-    def __enter__(self) -> SyncWebSocketClient[T]:
+    def __enter__(self) -> SyncWebSocket[T]:
         """Context manager entry."""
         self.connect()
         return self
@@ -581,7 +584,7 @@ class SyncWebSocketClient(Generic[T]):
 
     def __repr__(self) -> str:
         """Return a string representation of the client."""
-        return f"SyncWebSocketClient(uri={self._uri!r}, state={self.state.value})"
+        return f"SyncWebSocket(uri={self._uri!r}, state={self.state.value})"
 
     def __del__(self) -> None:
         """Clean up resources on deletion."""
@@ -590,3 +593,7 @@ class SyncWebSocketClient(Generic[T]):
                 self.close()
         except Exception:
             pass
+
+
+# Backward compatibility alias
+SyncWebSocketClient = SyncWebSocket

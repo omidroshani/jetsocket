@@ -15,7 +15,7 @@ from typing import (
     TypeVar,
 )
 
-from wsfabric.manager import WebSocketManager
+from wsfabric.manager import WebSocket
 
 if TYPE_CHECKING:
     from pydantic import BaseModel  # type: ignore[import-not-found]
@@ -26,7 +26,7 @@ T = TypeVar("T", bound="BaseModel")
 logger = logging.getLogger(__name__)
 
 
-class TypedWebSocket(WebSocketManager[T], Generic[T]):
+class TypedWebSocket(WebSocket[T], Generic[T]):
     """WebSocket with typed messages via Pydantic.
 
     Provides automatic serialization/deserialization of messages
