@@ -48,7 +48,13 @@ htmlcov/
 *.swp
 *.swo
 
-# Rust
+# Cython / C extensions
+*.so
+*.c
+!src/wsfabric/_core.pyx
+build/
+
+# Rust (legacy, removed)
 target/
 Cargo.lock
 *.dSYM/

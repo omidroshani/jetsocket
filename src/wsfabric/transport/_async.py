@@ -33,16 +33,7 @@ if TYPE_CHECKING:
 # Type alias for resolved addresses
 ResolvedAddress = tuple[socket.AddressFamily, str]
 
-# Try to import Rust core, fall back to pure Python
-try:
-    from wsfabric._core import Deflater, FrameParser, Handshake, parse_deflate_params
-except ImportError:
-    from wsfabric._core_fallback import (  # type: ignore[assignment]
-        Deflater,
-        FrameParser,
-        Handshake,
-        parse_deflate_params,
-    )
+from wsfabric._core import Deflater, FrameParser, Handshake, parse_deflate_params
 
 # Sentinel for connection lost
 _CONNECTION_LOST = object()

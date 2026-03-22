@@ -94,13 +94,9 @@ class ReplayConfig:
             raise ValueError(msg)
 
 
-# Try to import Rust RingBuffer, fall back to pure Python
-try:
-    from wsfabric._core import RingBuffer as _RustRingBuffer
+from wsfabric._core import RingBuffer as _CythonRingBuffer
 
-    _RUST_AVAILABLE = True
-except ImportError:
-    _RUST_AVAILABLE = False
+_CYTHON_AVAILABLE = True
 
 
 class _PythonRingBuffer(Generic[T]):
@@ -266,8 +262,8 @@ class MessageBuffer(Generic[T]):
         self._config = config or BufferConfig()
 
         # Initialize the underlying ring buffer
-        if _RUST_AVAILABLE:
-            self._buffer: _RustRingBuffer | _PythonRingBuffer[T] = _RustRingBuffer(
+        if _CYTHON_AVAILABLE:
+            self._buffer: _CythonRingBuffer | _PythonRingBuffer[T] = _CythonRingBuffer(
                 self._config.capacity, self._config.overflow_policy
             )
         else:

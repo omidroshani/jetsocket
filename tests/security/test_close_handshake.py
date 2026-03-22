@@ -6,10 +6,8 @@ import struct
 
 import pytest
 
-try:
-    from wsfabric._core import FrameParser
-except ImportError:
-    from wsfabric._core_fallback import FrameParser  # type: ignore[assignment]
+from wsfabric._core import FrameParser
+from wsfabric._core import FrameParser  
 
 
 @pytest.mark.security

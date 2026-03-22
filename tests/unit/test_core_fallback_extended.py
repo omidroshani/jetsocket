@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from wsfabric._core_fallback import (
+from wsfabric._core import (
     Deflater,
     Frame,
     FrameParser,

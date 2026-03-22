@@ -6,10 +6,8 @@ import base64
 
 import pytest
 
-try:
-    from wsfabric._core import Handshake, generate_key, validate_accept
-except ImportError:
-    from wsfabric._core_fallback import (  # type: ignore[assignment]
+from wsfabric._core import Handshake, generate_key, validate_accept
+from wsfabric._core import (  
         Handshake,
         generate_key,
         validate_accept,

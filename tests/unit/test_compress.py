@@ -13,7 +13,7 @@ class TestDeflater:
         try:
             from wsfabric._core import Deflater
         except ImportError:
-            from wsfabric._core_fallback import Deflater
+            from wsfabric._core import Deflater
         return Deflater(**kwargs)
 
     def test_compress_decompress_roundtrip(self) -> None:
@@ -154,7 +154,7 @@ class TestParseDeflateParams:
         try:
             from wsfabric._core import parse_deflate_params
         except ImportError:
-            from wsfabric._core_fallback import parse_deflate_params
+            from wsfabric._core import parse_deflate_params
         return parse_deflate_params(s)
 
     def test_basic(self) -> None:
@@ -200,7 +200,7 @@ class TestValidateUtf8:
         try:
             from wsfabric._core import validate_utf8
         except ImportError:
-            from wsfabric._core_fallback import validate_utf8
+            from wsfabric._core import validate_utf8
         return validate_utf8(data)
 
     def test_valid_ascii(self) -> None:

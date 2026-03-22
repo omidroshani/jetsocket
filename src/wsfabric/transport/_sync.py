@@ -31,16 +31,7 @@ from wsfabric.types import CloseCode, Frame, Opcode
 if TYPE_CHECKING:
     pass
 
-# Try to import Rust core, fall back to pure Python
-try:
-    from wsfabric._core import Deflater, FrameParser, Handshake, parse_deflate_params
-except ImportError:
-    from wsfabric._core_fallback import (  # type: ignore[assignment]
-        Deflater,
-        FrameParser,
-        Handshake,
-        parse_deflate_params,
-    )
+from wsfabric._core import Deflater, FrameParser, Handshake, parse_deflate_params
 
 
 class SyncTransport(AbstractTransport):

@@ -1,11 +1,11 @@
 [build-system]
-requires = ["maturin>=1.7,<2.0"]
-build-backend = "maturin"
+requires = ["setuptools>=68.0", "Cython>=3.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "wsfabric"
 version = "0.1.0"
-description = "Production-grade, resilient WebSocket library for Python with Rust-powered performance"
+description = "Production-grade, resilient WebSocket library for Python with Cython-powered performance"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Omid Roshani", email = "hello@omid.ai" }]
@@ -20,7 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Rust",
+    "Programming Language :: Cython",
     "Framework :: AsyncIO",
     "Topic :: Internet",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -42,11 +42,11 @@ Documentation = "https://github.com/omidroshani/wsfabric#readme"
 Repository = "https://github.com/omidroshani/wsfabric"
 Issues = "https://github.com/omidroshani/wsfabric/issues"
 
-[tool.maturin]
-features = ["pyo3/extension-module"]
-python-source = "src"
-module-name = "wsfabric._core"
-manifest-path = "rust/Cargo.toml"
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+wsfabric = ["_core.pyx", "py.typed", "_core.pyi"]
 
 [dependency-groups]
 dev = [
@@ -56,7 +56,7 @@ dev = [
     "pytest-benchmark>=5.0",
     "mypy>=1.13",
     "ruff>=0.8",
-    "maturin>=1.7",
+    "Cython>=3.0",
     "websockets>=14.0",
     "websocket-client>=1.8",
     "hypothesis>=6.0",

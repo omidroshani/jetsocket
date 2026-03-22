@@ -9,10 +9,8 @@ import pytest
 
 from wsfabric.transport import AsyncTransport, BaseTransportConfig
 
-try:
-    from wsfabric._core import Deflater, RingBuffer
-except ImportError:
-    from wsfabric._core_fallback import Deflater, RingBuffer  # type: ignore[assignment]
+from wsfabric._core import Deflater, RingBuffer
+from wsfabric._core import Deflater, RingBuffer  
 
 
 def _get_memory() -> int:
