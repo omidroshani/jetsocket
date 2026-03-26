@@ -36,8 +36,7 @@ class BinanceTrade(BaseModel):
 async def process_trades(sub, name: str) -> None:
     """Process trades from a subscription."""
     async for msg in sub:
-        data = msg.get("data", msg)
-        trade = BinanceTrade.model_validate(data)
+        trade = BinanceTrade.model_validate(msg)
         print(f"{name}: {trade.side} {trade.price} x {trade.quantity}")
 
 
@@ -45,7 +44,9 @@ async def main() -> None:
     """Stream BTC and ETH trades from Binance."""
     async with Multiplex(
         "wss://stream.binance.com:9443/ws",
-        channel_key="stream",
+        channel_extractor=lambda msg: (
+            f"{msg['s'].lower()}@trade" if "s" in msg else None
+        ),
         subscribe_msg=lambda ch: {
             "method": "SUBSCRIBE",
             "params": [ch],

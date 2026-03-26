@@ -64,16 +64,15 @@ class Dashboard:
         print("Press Ctrl+C to exit")
 
 
-async def stream_symbol(mux, symbol: str, dashboard: Dashboard) -> None:
+async def stream_symbol(mux: Multiplex[Any], symbol: str, dashboard: Dashboard) -> None:
     """Stream updates for a single symbol."""
     sub = await mux.subscribe(f"{symbol.lower()}@ticker")
 
     async for msg in sub:
-        data = msg.get("data", msg)
         dashboard.update(
             symbol,
-            price=float(data.get("c", 0)),
-            change_24h=float(data.get("P", 0)),
+            price=float(msg.get("c", 0)),
+            change_24h=float(msg.get("P", 0)),
         )
 
 
@@ -85,11 +84,13 @@ async def main() -> None:
     # Use dashboard-optimized settings
     async with Multiplex(
         "wss://stream.binance.com:9443/ws",
-        channel_key="stream",
+        channel_extractor=lambda msg: (
+            f"{msg['s'].lower()}@ticker" if "s" in msg else None
+        ),
         subscribe_msg=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
         reconnect=True,
         heartbeat=30.0,
-        buffer_capacity=100,
+        buffer=100,
     ) as mux:
         # Stream all symbols concurrently
         tasks = [stream_symbol(mux, s, dashboard) for s in symbols]
