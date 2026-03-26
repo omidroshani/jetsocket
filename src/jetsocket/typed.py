@@ -85,7 +85,6 @@ class TypedWebSocket(WebSocket[T], Generic[T]):
                 "Install it with: pip install pydantic"
             ) from e
 
-        self._message_type = message_type
         self._strict = strict
         self._validation_errors = 0
 
@@ -102,6 +101,7 @@ class TypedWebSocket(WebSocket[T], Generic[T]):
 
         super().__init__(
             uri,
+            message_type=message_type,
             deserializer=deserializer,
             serializer=serializer,
             **kwargs,
@@ -126,7 +126,7 @@ class TypedWebSocket(WebSocket[T], Generic[T]):
 def create_typed_deserializer(
     message_type: type[T],
     strict: bool = True,
-) -> tuple[Any, int]:
+) -> tuple[Any, Any]:
     """Create a typed deserializer function.
 
     This is a utility function for creating custom deserializers
@@ -137,7 +137,7 @@ def create_typed_deserializer(
         strict: If True, raise on validation errors.
 
     Returns:
-        A tuple of (deserializer function, error count ref).
+        A tuple of (deserializer function, error_count callable).
 
     Raises:
         ImportError: If pydantic is not installed.
@@ -149,14 +149,13 @@ def create_typed_deserializer(
             "pydantic is required. Install it with: pip install pydantic"
         ) from e
 
-    error_count = 0
+    errors = [0]
 
-    def deserializer(data: bytes) -> T:
-        nonlocal error_count
+    def deserializer(data: bytes) -> T | None:
         try:
             return message_type.model_validate_json(data)  # type: ignore[no-any-return]
         except ValidationError:
-            error_count += 1
+            errors[0] += 1
             if strict:
                 raise
             logger.warning(
@@ -164,6 +163,9 @@ def create_typed_deserializer(
                 message_type.__name__,
                 data[:100],
             )
-            raise
+            return None
+
+    def error_count() -> int:
+        return errors[0]
 
     return deserializer, error_count

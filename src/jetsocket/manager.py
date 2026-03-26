@@ -573,7 +573,7 @@ class WebSocket(Generic[T]):
             )
 
         serialized = self._serializer(data)
-        await self._transport.send(serialized)
+        await self._transport.send(serialized, binary=False)
         self._stats.record_message_sent(len(serialized))
 
     async def send_raw(self, data: bytes, *, binary: bool = True) -> None:

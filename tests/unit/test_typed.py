@@ -243,7 +243,7 @@ class TestTypedWebSocketIntegration:
         pytest.importorskip("pydantic")
         from pydantic import BaseModel
 
-        from jetsocket.manager import WebSocketManager
+        from jetsocket.manager import WebSocket
         from jetsocket.typed import TypedWebSocket
 
         class TestMessage(BaseModel):
@@ -251,7 +251,7 @@ class TestTypedWebSocketIntegration:
 
         ws = TypedWebSocket("wss://example.com/ws", TestMessage)
 
-        assert isinstance(ws, WebSocketManager)
+        assert isinstance(ws, WebSocket)
 
     def test_has_all_manager_methods(self) -> None:
         """Test that TypedWebSocket has all WebSocketManager methods."""
