@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.jpeg" alt="JetSocket" width="100%">
+  <img src="https://raw.githubusercontent.com/omidroshani/jetsocket/main/docs/assets/banner.jpeg" alt="JetSocket" width="100%">
 </p>
 
 <p align="center">
