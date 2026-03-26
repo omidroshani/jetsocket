@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.jpeg" alt="JetSocket" width="100%">
+</p>
+
 # JetSocket
 
 **Production-grade, resilient WebSocket library for Python**

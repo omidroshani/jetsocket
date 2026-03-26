@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="docs/assets/banner.jpeg" alt="JetSocket" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/jetsocket/"><img src="https://img.shields.io/pypi/v/jetsocket" alt="PyPI"></a>
+  <a href="https://pypi.org/project/jetsocket/"><img src="https://img.shields.io/pypi/pyversions/jetsocket" alt="Python"></a>
+  <a href="https://github.com/omidroshani/jetsocket/blob/main/LICENSE"><img src="https://img.shields.io/github/license/omidroshani/jetsocket" alt="License"></a>
+</p>
+
 # JetSocket
 
 Production-grade, resilient WebSocket library for Python with Cython-powered performance.
