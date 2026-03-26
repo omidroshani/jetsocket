@@ -102,6 +102,7 @@ nav:
     - Multiplexing: user-guide/multiplexing.md
     - Typed Messages: user-guide/typed-messages.md
   - Examples:
+    - Running Examples: examples/index.md
     - Binance Trades: examples/binance-trades.md
     - LLM Streaming: examples/llm-streaming.md
     - Multi-Symbol Dashboard: examples/multi-symbol-dashboard.md

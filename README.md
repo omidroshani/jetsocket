@@ -103,8 +103,8 @@ async with WebSocket("wss://...", message_type=Trade) as ws:
 from jetsocket import Multiplex
 
 async with Multiplex(
-    "wss://stream.binance.com/ws",
-    channel_key="stream",
+    "wss://stream.binance.com:9443/ws",
+    channel_extractor=lambda msg: f"{msg['s'].lower()}@trade" if "s" in msg else None,
     subscribe_msg=lambda ch: {"method": "SUBSCRIBE", "params": [ch]},
     heartbeat=20.0,
 ) as mux:
@@ -126,6 +126,26 @@ ws = trading("wss://stream.binance.com/ws")
 # Optimized for LLM streaming
 ws = llm_stream("wss://api.example.com/v1/stream")
 ```
+
+## Examples
+
+Run the included examples to see JetSocket in action:
+
+```bash
+# Real-time Binance trade streaming with multiplexing
+uv run --extra pydantic python examples/binance_trades.py
+
+# Live terminal dashboard tracking 5 crypto pairs
+uv run python examples/multi_symbol_dashboard.py
+
+# Sync price fetching and analysis
+uv run python examples/sync_simple.py
+
+# OpenAI LLM streaming via WebSocket
+OPENAI_API_KEY="sk-..." uv run python examples/llm_streaming.py
+```
+
+See [`examples/README.md`](examples/README.md) for details.
 
 ## Architecture
 

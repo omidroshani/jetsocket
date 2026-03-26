@@ -12,11 +12,10 @@ The core async WebSocket client with automatic reconnection, heartbeat, and mess
         - send
         - recv
         - run
-        - on
+        - "on"
         - stats
         - is_connected
         - latency_ms
-        - buffer
 
 ## Configuration
 

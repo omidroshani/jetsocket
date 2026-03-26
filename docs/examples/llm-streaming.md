@@ -1,87 +1,133 @@
 # LLM Streaming
 
-This example demonstrates how to stream responses from an LLM API using the LLM preset.
+Stream responses from OpenAI via WebSocket using the Responses API.
+
+## Run It
+
+```bash
+OPENAI_API_KEY="sk-..." uv run python examples/llm_streaming.py
+```
+
+Requires an [OpenAI API key](https://platform.openai.com/api-keys).
 
 ## Overview
 
-- Connect to an LLM WebSocket API
+- Connect to OpenAI's Responses API WebSocket endpoint
 - Use the `llm_stream` preset for optimal settings
 - Handle token-by-token streaming
 - Graceful error handling
 
-## Prerequisites
-
-```bash
-pip install jetsocket
-```
-
 ## Full Code
 
 ```python
-"""Stream LLM responses via WebSocket."""
+"""Stream LLM responses via WebSocket using OpenAI Responses API."""
 
 from __future__ import annotations
 
 import asyncio
-import json
-import sys
+import os
+import ssl
 
 from jetsocket.presets import llm_stream
 
 
-async def stream_completion(prompt: str) -> None:
-    """Stream a completion from the LLM API."""
-    # Use LLM preset: quick retry, large messages, no compression
-    ws = llm_stream("wss://api.example.com/v1/stream")
+async def stream_completion(prompt: str, model: str = "gpt-4o-mini") -> None:
+    """Stream a completion from OpenAI via WebSocket."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        print("Error: OPENAI_API_KEY environment variable is required")
+        return
+
+    uri = "wss://api.openai.com/v1/responses"
+
+    # Use LLM preset with auth headers
+    ws = llm_stream(
+        uri,
+        extra_headers={
+            "Authorization": f"Bearer {api_key}",
+        },
+        ssl_context=ssl.create_default_context(),
+    )
 
     @ws.on("connected")
-    async def on_connected(event):
-        # Send the prompt when connected
-        await ws.send({
-            "type": "message",
-            "role": "user",
-            "content": prompt,
-        })
+    async def on_connected(event: object) -> None:
+        """Send prompt when connected."""
+        await ws.send(
+            {
+                "type": "response.create",
+                "model": model,
+                "input": [
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": prompt,
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
 
     @ws.on("message")
-    async def on_message(event):
+    async def on_message(event: object) -> None:
+        """Handle streaming response events."""
         msg = event.data
+        msg_type = msg.get("type", "")
 
-        if msg.get("type") == "content_block_delta":
+        if msg_type == "response.output_text.delta":
             # Stream tokens to stdout
-            delta = msg.get("delta", {})
-            if text := delta.get("text"):
-                print(text, end="", flush=True)
+            print(msg.get("delta", ""), end="", flush=True)
 
-        elif msg.get("type") == "message_stop":
+        elif msg_type == "response.completed":
             # End of response
             print("\n")
             await ws.close()
 
-        elif msg.get("type") == "error":
+        elif msg_type == "error":
             print(f"\nError: {msg.get('error', {}).get('message')}")
             await ws.close()
 
     @ws.on("error")
-    async def on_error(event):
-        print(f"\nConnection error: {event.message}")
+    async def on_error(event: object) -> None:
+        """Handle connection errors."""
+        print(f"\nConnection error: {event}")
 
+    await ws.connect()
     await ws.run()
 
 
 async def main() -> None:
     """Run the streaming example."""
     prompt = "Explain WebSockets in 3 sentences."
+
     print(f"Prompt: {prompt}\n")
-    print("Response: ", end="")
+    print("Response: ", end="", flush=True)
+
     await stream_completion(prompt)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nStopped")
 ```
 
 ## Key Concepts
+
+### OpenAI Responses API WebSocket
+
+OpenAI provides a WebSocket endpoint at `wss://api.openai.com/v1/responses` for streaming text responses. This is simpler and lower-latency than the Realtime API for text-only use cases.
+
+The protocol flow:
+
+1. Connect with `Authorization` header
+2. Send `response.create` with your prompt
+3. Receive `response.output_text.delta` events with streaming tokens
+4. Receive `response.completed` when done
 
 ### LLM Preset
 
@@ -90,23 +136,15 @@ The `llm_stream` preset is optimized for LLM APIs:
 ```python
 from jetsocket.presets import llm_stream
 
-ws = llm_stream("wss://api.example.com/v1/stream")
+ws = llm_stream("wss://api.openai.com/v1/responses", extra_headers={...})
 ```
 
 Settings:
-- Quick retry with limited attempts (don't wait forever)
-- Longer heartbeat interval (less overhead)
+
+- Quick retry with limited attempts (5 max — don't wait forever)
 - Large max message size (128MB for long responses)
 - Compression disabled (token streaming doesn't benefit)
-
-### Token Streaming
-
-LLM APIs typically send tokens one at a time:
-
-```python
-if text := delta.get("text"):
-    print(text, end="", flush=True)  # Print without newline
-```
+- Small buffer (LLM streams are sequential)
 
 ### Event-Driven Pattern
 
@@ -124,28 +162,6 @@ async def on_message(event):
 
 ## Variations
 
-### With Authentication
-
-```python
-from jetsocket.presets import llm_stream
-
-ws = llm_stream(
-    "wss://api.example.com/v1/stream",
-    headers={"Authorization": f"Bearer {API_KEY}"},
-)
-```
-
-### Custom Timeout
-
-```python
-from jetsocket.presets import llm_stream
-
-ws = llm_stream(
-    "wss://api.example.com/v1/stream",
-    heartbeat=HeartbeatConfig(interval=60.0, timeout=30.0),
-)
-```
-
 ### Accumulate Full Response
 
 ```python
@@ -153,32 +169,16 @@ response_text = []
 
 @ws.on("message")
 async def on_message(event):
-    if text := event.data.get("delta", {}).get("text"):
-        response_text.append(text)
+    msg = event.data
+    if msg.get("type") == "response.output_text.delta":
+        response_text.append(msg.get("delta", ""))
 
 # After streaming
 full_response = "".join(response_text)
 ```
 
-## Error Handling
-
-The LLM preset limits retries to prevent hanging on API failures:
+### Different Model
 
 ```python
-backoff=BackoffConfig(
-    base=1.0,
-    multiplier=2.0,
-    cap=10.0,
-    max_attempts=5,  # Don't retry forever
-)
-```
-
-For critical applications, handle the final failure:
-
-```python
-@ws.on("error")
-async def on_error(event):
-    if "max retries exceeded" in str(event.error):
-        # Fallback to REST API or notify user
-        pass
+await stream_completion("Write a haiku about Python", model="gpt-4o")
 ```

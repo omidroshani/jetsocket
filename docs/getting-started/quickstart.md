@@ -126,6 +126,26 @@ async with WebSocket("wss://stream.example.com/ws", message_type=TradeMessage) a
         print(f"{trade.symbol}: ${trade.price:.2f}")
 ```
 
+## Running the Examples
+
+JetSocket ships with ready-to-run examples:
+
+```bash
+# Binance trade streaming with multiplexing
+uv run --extra pydantic python examples/binance_trades.py
+
+# Live terminal dashboard
+uv run python examples/multi_symbol_dashboard.py
+
+# Sync price analysis (runs and exits)
+uv run python examples/sync_simple.py
+
+# OpenAI LLM streaming
+OPENAI_API_KEY="sk-..." uv run python examples/llm_streaming.py
+```
+
+See [Running Examples](../examples/index.md) for details.
+
 ## What's Next?
 
 - [Basic Concepts](basic-concepts.md) - Understand the core architecture

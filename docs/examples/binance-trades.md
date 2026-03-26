@@ -1,19 +1,19 @@
 # Binance Trade Streaming
 
-This example demonstrates how to stream real-time trade data from Binance using multiplexing and typed messages.
+Stream real-time trade data from Binance using multiplexing and Pydantic models.
+
+## Run It
+
+```bash
+uv run --extra pydantic python examples/binance_trades.py
+```
 
 ## Overview
 
 - Connect to Binance WebSocket API
-- Subscribe to multiple trading pairs
+- Subscribe to multiple trading pairs over a single connection
 - Parse trades with Pydantic models
 - Handle reconnections gracefully
-
-## Prerequisites
-
-```bash
-pip install jetsocket pydantic
-```
 
 ## Full Code
 
@@ -23,6 +23,7 @@ pip install jetsocket pydantic
 from __future__ import annotations
 
 import asyncio
+
 from pydantic import BaseModel, Field
 
 from jetsocket import Multiplex
@@ -49,8 +50,7 @@ class BinanceTrade(BaseModel):
 async def process_trades(sub, name: str) -> None:
     """Process trades from a subscription."""
     async for msg in sub:
-        data = msg.get("data", msg)
-        trade = BinanceTrade.model_validate(data)
+        trade = BinanceTrade.model_validate(msg)
         print(f"{name}: {trade.side} {trade.price} x {trade.quantity}")
 
 
@@ -58,7 +58,9 @@ async def main() -> None:
     """Stream BTC and ETH trades from Binance."""
     async with Multiplex(
         "wss://stream.binance.com:9443/ws",
-        channel_key="stream",
+        channel_extractor=lambda msg: (
+            f"{msg['s'].lower()}@trade" if "s" in msg else None
+        ),
         subscribe_msg=lambda ch: {
             "method": "SUBSCRIBE",
             "params": [ch],
@@ -95,29 +97,46 @@ if __name__ == "__main__":
 
 ## Key Concepts
 
+### Channel Extraction
+
+Binance's `/ws` endpoint sends raw trade messages without a wrapper. We extract the channel from the symbol field:
+
+```python
+channel_extractor=lambda msg: (
+    f"{msg['s'].lower()}@trade" if "s" in msg else None
+)
+```
+
+A raw trade message from Binance looks like:
+
+```json
+{
+  "e": "trade",
+  "s": "BTCUSDT",
+  "p": "69500.10",
+  "q": "0.001",
+  ...
+}
+```
+
+The extractor maps `"BTCUSDT"` to `"btcusdt@trade"`, which matches the subscription channel name.
+
+!!! tip "Alternative: Combined stream endpoint"
+    If you prefer a `"stream"` key for routing, use `/stream?streams=` instead of `/ws`:
+    ```python
+    Multiplex(
+        "wss://stream.binance.com:9443/stream",
+        channel_key="stream",  # Messages arrive as {"stream": "btcusdt@trade", "data": {...}}
+    )
+    ```
+
 ### Multiplexing
 
-Instead of opening separate connections for each symbol, we use `Multiplex` to handle multiple subscriptions over a single WebSocket:
+Instead of opening separate connections for each symbol, `Multiplex` handles multiple subscriptions over a single WebSocket:
 
 ```python
 btc = await mux.subscribe("btcusdt@trade")
 eth = await mux.subscribe("ethusdt@trade")
-```
-
-### Channel Extraction
-
-Binance wraps messages with a `stream` field that we use for routing:
-
-```json
-{
-  "stream": "btcusdt@trade",
-  "data": {
-    "e": "trade",
-    "s": "BTCUSDT",
-    "p": "50000.00",
-    ...
-  }
-}
 ```
 
 ### Pydantic Models
@@ -147,12 +166,4 @@ for symbol in symbols:
 ```python
 btc_trades = await mux.subscribe("btcusdt@trade")
 btc_depth = await mux.subscribe("btcusdt@depth20@100ms")
-```
-
-### Using the Trading Preset
-
-```python
-from jetsocket.presets import trading
-
-ws = trading("wss://stream.binance.com:9443/ws")
 ```

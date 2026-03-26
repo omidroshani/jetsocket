@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - No required dependencies (Cython-optimized C extension included)
 
 ## Install from PyPI
@@ -34,10 +34,23 @@ pip install jetsocket[all]
 For development, clone the repository and install with dev dependencies:
 
 ```bash
-git clone https://github.com/jetsocket/jetsocket.git
+git clone https://github.com/omidroshani/jetsocket.git
 cd jetsocket
-pip install -e ".[dev]"
+uv sync
+make build   # Build Cython extension
 ```
+
+Then run the examples:
+
+```bash
+# Binance trade streaming
+uv run --extra pydantic python examples/binance_trades.py
+
+# Sync price analysis
+uv run python examples/sync_simple.py
+```
+
+See [Running Examples](../examples/index.md) for all available examples.
 
 ## Verify Installation
 
