@@ -36,8 +36,7 @@ truststore = ["truststore>=0.8"]
 all = ["pydantic>=2.0", "orjson>=3.9", "uvloop>=0.19; sys_platform != 'win32'", "truststore>=0.8"]
 
 [project.urls]
-Homepage = "https://github.com/omidroshani/jetsocket"
-Documentation = "https://github.com/omidroshani/jetsocket#readme"
+Documentation = "https://omidroshani.github.io/jetsocket/"
 Repository = "https://github.com/omidroshani/jetsocket"
 Issues = "https://github.com/omidroshani/jetsocket/issues"
 
