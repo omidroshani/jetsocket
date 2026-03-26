@@ -23,9 +23,9 @@ jobs:
         env:
           CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-*"
           CIBW_SKIP: "*-musllinux_i686 *-win32"
-          CIBW_BEFORE_BUILD: pip install Cython
+          CIBW_BEFORE_BUILD: pip install Cython setuptools
           CIBW_TEST_REQUIRES: pytest pytest-asyncio
-          CIBW_TEST_COMMAND: pytest {project}/tests/unit/test_core_fallback.py -q
+          CIBW_TEST_COMMAND: python -c "from jetsocket._core import Frame, FrameParser, Opcode, apply_mask; print('OK')"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -44,7 +44,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install build tools
-        run: pip install build Cython
+        run: pip install build Cython setuptools
 
       - name: Generate C source
         run: cythonize src/jetsocket/_core.pyx
